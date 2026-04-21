@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Phonetic Flow v2.5.2</title>
+    <link rel="manifest" href="manifest.json">
+    <title>Phonetic Flow v2.6.0</title>
     <style>
         :root {
             --bg-color: #0f0f0f;
@@ -19,19 +20,24 @@
             background-color: var(--bg-color);
             font-family: 'Segoe UI', system-ui, sans-serif;
             color: var(--text-color); user-select: none;
-            touch-action: none; /* Prevents mobile zooming/scrolling during play */
+            touch-action: none;
         }
 
-        #game-container { position: relative; width: 100vw; height: 100vh; display: flex; overflow: hidden; }
+        #game-container { 
+            position: relative; width: 100vw; height: 100vh; 
+            display: flex; overflow: hidden; 
+            padding-bottom: 60px; /* Buffer for bottom labels */
+            box-sizing: border-box;
+        }
+        
         .bg-half { flex: 1; height: 100%; opacity: 0.12; pointer-events: none; }
         #l-bg { background-color: var(--l-color); border-right: 1px solid #333; }
         #r-bg { background-color: var(--r-color); }
 
         .side-stack {
-            position: absolute; bottom: 0; width: 160px; height: 100%;
+            position: absolute; bottom: 80px; width: 160px; height: auto;
             display: flex; flex-direction: column-reverse; z-index: 5;
             padding: 10px; box-sizing: border-box; pointer-events: none;
-            max-height: 85vh; overflow: hidden;
         }
         #left-stack { left: 0; align-items: flex-start; }
         #right-stack { right: 0; align-items: flex-end; }
@@ -45,12 +51,20 @@
         }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        .lane-label {
-            position: absolute; bottom: 50px; font-size: 150px; font-weight: 900;
-            color: var(--accent); opacity: 0.25; z-index: 1; pointer-events: none;
+        /* Star Burst Animation for Shop */
+        @keyframes starBurst {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.2); filter: brightness(2) drop-shadow(0 0 15px gold); }
+            100% { transform: scale(1); filter: brightness(1); }
         }
-        #l-label { left: 15%; }
-        #r-label { right: 15%; }
+        .purchased-anim { animation: starBurst 0.5s ease-out; }
+
+        .lane-label {
+            position: absolute; bottom: 100px; font-size: 120px; font-weight: 900;
+            color: var(--accent); opacity: 0.15; z-index: 1; pointer-events: none;
+        }
+        #l-label { left: 10%; }
+        #r-label { right: 10%; }
 
         .block {
             position: absolute; width: 100px; height: 100px;
@@ -67,15 +81,14 @@
             width: 55px; height: 55px; border-radius: 50%; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            top: 20px; right: 20px;
         }
-        #home-btn { top: 20px; left: 20px; }
-        #gear-btn { top: 20px; right: 20px; }
 
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98); display: flex;
             flex-direction: column; align-items: center; justify-content: center;
-            z-index: 100; text-align: center; padding: 20px; box-sizing: border-box;
+            z-index: 300; text-align: center; padding: 20px; box-sizing: border-box;
         }
         .hidden { display: none !important; }
 
@@ -90,11 +103,10 @@
         #lives-display { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); font-size: 26px; z-index: 150; }
         #score-display { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 14px; opacity: 0.6; z-index: 150; }
 
-        /* Shop Container Logic */
         .shop-container {
             width: 100%; flex-grow: 1; overflow-y: auto;
             display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 15px; padding: 20px; box-sizing: border-box; margin: 10px 0;
+            gap: 15px; padding: 20px; box-sizing: border-box;
         }
     </style>
 </head>
@@ -103,8 +115,7 @@
 <div id="lives-display">❤️❤️❤️</div>
 <div id="score-display">Progress: <span id="round-hits">0</span>/10</div>
 
-<button id="home-btn" class="nav-btn" onclick="showMenu('main-menu')"><span>🏠</span></button>
-<button id="gear-btn" class="nav-btn" onclick="showMenu('settings-menu')"><span>⚙️</span></button>
+<button id="pause-btn" class="nav-btn" onclick="showMenu('pause-menu')"><span>⏸</span></button>
 
 <div id="game-container">
     <div id="l-bg" class="bg-half"></div>
@@ -118,20 +129,21 @@
 <div id="main-menu" class="overlay">
     <h1 style="color: var(--accent); font-size: 3.5rem; margin:0;">PHONETIC FLOW</h1>
     <p id="menu-coin-text" style="font-size: 1.5rem; margin:10px 0;">💰 0</p>
-    <button onclick="startGame()" style="font-size: 1.5rem; background: var(--l-color); padding: 20px 50px;">GO TO MISSION</button>
+    <button onclick="startGame()" style="font-size: 1.8rem; background: var(--l-color); padding: 20px 60px;">START</button>
     <button onclick="showMenu('sticker-book')">MY STICKER BOOK</button>
     <button onclick="showMenu('shop-menu')">ECONOMY SHOP</button>
 </div>
 
-<div id="settings-menu" class="overlay hidden">
-    <h2>ENGINE SETTINGS</h2>
-    <p style="opacity:0.7">ADJUST VOICE SPEED</p>
-    <div>
-        <button id="speed-0.7" onclick="setSpeed(0.7)">🐢 TURTLE</button>
-        <button id="speed-1.0" onclick="setSpeed(1.0)">🧑 HUMAN</button>
-        <button id="speed-1.3" onclick="setSpeed(1.3)">⚡ SONIC</button>
+<div id="pause-menu" class="overlay hidden">
+    <h2 style="color: var(--accent);">GAME PAUSED</h2>
+    <div style="margin: 20px 0;">
+        <p style="opacity:0.7; font-size: 14px;">VOICE SPEED</p>
+        <button id="speed-0.7" onclick="setSpeed(0.7)">🐢</button>
+        <button id="speed-1.0" onclick="setSpeed(1.0)">🧑</button>
+        <button id="speed-1.3" onclick="setSpeed(1.3)">⚡</button>
     </div>
-    <button onclick="closeMenus()" style="margin-top: 40px; background: #666;">RESUME</button>
+    <button onclick="closeMenus()" style="background: var(--l-color); width: 200px;">RESUME</button>
+    <button onclick="location.reload()" style="background: #444; width: 200px;">EXIT TO MENU</button>
 </div>
 
 <div id="shop-menu" class="overlay hidden">
@@ -144,27 +156,26 @@
 <div id="sticker-book" class="overlay hidden">
     <h2>MY STICKERS</h2>
     <div id="book-display" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin:20px;"></div>
-    <div style="background: #222; padding: 20px; border-radius: 15px; margin-top: 10px;">
-        <p style="color: #888; font-size: 14px; margin-bottom:10px;">Preview: <span id="share-text-preview"></span></p>
-        <button onclick="copyShare()" style="background: var(--accent); color: black;">📋 COPY SCOUT REPORT</button>
-    </div>
     <button onclick="showMenu('main-menu')">BACK</button>
 </div>
 
 <div id="game-over" class="overlay hidden">
-    <h1 style="color: var(--r-color); font-size: 3rem;">KEEP GOING!</h1>
-    <button onclick="startGame()" style="background: var(--l-color);">YES, LET'S DO IT!</button>
+    <h1 style="color: var(--r-color); font-size: 3rem;">GAME OVER</h1>
+    <button onclick="startGame()" style="background: var(--l-color);">TRY AGAIN</button>
     <button onclick="showMenu('main-menu')" style="background: #444;">MAIN MENU</button>
 </div>
 
 <div id="round-win" class="overlay hidden">
-    <h1 style="color: var(--l-color); font-size: 3rem;">ROUND CLEAR! 🎊</h1>
-    <p>10 sounds recognized perfectly.</p>
+    <h1 style="color: var(--l-color); font-size: 3rem;">ROUND CLEAR!</h1>
     <p>Bonus: 💰 +50 Coins</p>
     <button onclick="showMenu('main-menu')">AWESOME</button>
 </div>
 
 <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
+
     const pairs = [
         { word: "Light", type: "L" }, { word: "Right", type: "R" },
         { word: "Climb", type: "L" }, { word: "Crime", type: "R" },
@@ -192,7 +203,7 @@
 
     function setSpeed(s) {
         state.speed = parseFloat(s);
-        document.querySelectorAll('#settings-menu button').forEach(b => b.classList.remove('active-yellow'));
+        document.querySelectorAll('#pause-menu button').forEach(b => b.classList.remove('active-yellow'));
         const btn = document.getElementById(`speed-${s.toFixed(1)}`);
         if(btn) btn.classList.add('active-yellow');
     }
@@ -219,12 +230,8 @@
     function closeMenus() {
         document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden'));
         state.isPaused = false;
-        // Logic check: only spawn if game isn't finished
-        if (!currentBlock && state.roundHits < 10 && state.lives > 0) {
-            spawnBlock();
-        } else if (currentBlock) {
-            animate();
-        }
+        if (!currentBlock && state.roundHits < 10) spawnBlock();
+        else animate();
     }
 
     function startGame() {
@@ -232,27 +239,26 @@
         state.roundHits = 0;
         document.getElementById('left-stack').innerHTML = '';
         document.getElementById('right-stack').innerHTML = '';
+        updateUI(); // Immediate sync for hearts
         closeMenus();
     }
 
     function spawnBlock() {
         if (state.isPaused || state.lives <= 0 || state.roundHits >= 10) return;
-        
         const pair = pairs[Math.floor(Math.random() * pairs.length)];
         
         speak(pair.word, () => {
             if(state.isPaused || currentBlock) return; 
-            
             const el = document.createElement('div');
             el.className = 'block';
             el.innerText = "?";
             el.style.left = "calc(50% - 50px)";
             el.style.top = "0px";
             
-            // Re-trigger audio on block tap
+            // Revert to Pause/Resume on block click
             el.addEventListener('pointerdown', (e) => {
                 e.stopPropagation();
-                speak(pair.word);
+                showMenu('pause-menu');
             });
 
             document.getElementById('game-container').appendChild(el);
@@ -265,20 +271,17 @@
         if (state.isPaused || !currentBlock) return;
         currentBlock.top += (2.2 * state.speed);
         currentBlock.element.style.top = currentBlock.top + "px";
-        
-        if (currentBlock.top > window.innerHeight - 100) resolve(null);
+        if (currentBlock.top > window.innerHeight - 120) resolve(null);
         else animationId = requestAnimationFrame(animate);
     }
 
     window.addEventListener('pointerdown', (e) => {
         if (state.isPaused || !currentBlock || e.target.closest('.nav-btn') || e.target.closest('.block')) return;
-        const side = (e.clientX < window.innerWidth / 2) ? "L" : "R";
-        resolve(side);
+        resolve(e.clientX < window.innerWidth / 2 ? "L" : "R");
     });
 
     function resolve(choice) {
         if (!currentBlock) return;
-        
         const data = currentBlock.data;
         const isCorrect = choice === data.type;
         
@@ -296,16 +299,11 @@
             state.coins += (state.speed >= 1.3 ? 20 : 10);
         } else {
             state.lives--;
-            if(state.lives <= 0) {
-                showMenu('game-over');
-                cleanup();
-                return;
-            }
+            if(state.lives <= 0) return showMenu('game-over');
         }
 
         cleanup();
         updateUI();
-        
         if(state.roundHits >= 10) {
             state.coins += 50;
             setTimeout(() => showMenu('round-win'), 500);
@@ -323,27 +321,34 @@
     function renderShop() {
         const container = document.getElementById('shop-display');
         container.innerHTML = '';
-        shopItems.forEach(item => {
+        shopItems.forEach((item, index) => {
             const card = document.createElement('div');
+            card.id = `item-${index}`;
             card.style = "background:#222; padding:15px; border-radius:12px; display:flex; flex-direction:column; align-items:center;";
             card.innerHTML = `
                 <div style="font-size:35px; margin-bottom:10px;">${item.emoji}</div>
-                <button onclick="buyItem('${item.emoji}', ${item.price}, '${item.type || 'sticker'}')" 
-                        style="padding:8px 10px; font-size:14px; margin:0; width:100%;">💰 ${item.price}</button>
+                <button onclick="buyItem(${index})" style="padding:8px 10px; font-size:12px; margin:0; width:100%;">💰 ${item.price}</button>
             `;
             container.appendChild(card);
         });
         document.getElementById('shop-coins').innerText = state.coins;
     }
 
-    function buyItem(emoji, price, type) {
-        if (state.coins >= price) {
-            state.coins -= price;
-            if(type === 'life') state.lives++;
-            else state.unlocked.push(emoji);
+    function buyItem(index) {
+        const item = shopItems[index];
+        if (state.coins >= item.price) {
+            state.coins -= item.price;
+            if(item.type === 'life') state.lives++;
+            else state.unlocked.push(item.emoji);
+            
+            // Trigger Star Burst Animation
+            const card = document.getElementById(`item-${index}`);
+            card.classList.add('purchased-anim');
+            setTimeout(() => card.classList.remove('purchased-anim'), 500);
+            
             renderShop();
             updateUI();
-        } else alert("Not enough coins!");
+        }
     }
 
     function renderBook() {
@@ -355,18 +360,13 @@
             d.innerText = s;
             container.appendChild(d);
         });
-        document.getElementById('share-text-preview').innerText = `Hits: ${state.totalCorrect} | Stickers: ${state.unlocked.length}`;
-    }
-
-    function copyShare() {
-        const text = `🎧 PHONETIC FLOW REPORT\nAccuracy: ${state.totalCorrect} hits\nStickers: ${state.unlocked.join(' ')}`;
-        navigator.clipboard.writeText(text).then(() => alert("Copied!"));
     }
 
     function updateUI() {
         document.getElementById('menu-coin-text').innerText = `💰 ${state.coins}`;
         document.getElementById('lives-display').innerText = "❤️".repeat(Math.max(0, state.lives));
         document.getElementById('round-hits').innerText = state.roundHits;
+        setSpeed(state.speed);
     }
 
     setSpeed(1.0);
