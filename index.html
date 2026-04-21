@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
-    <title>Phonetic Flow v2.7.1</title>
+    <title>Phonetic Flow v2.8.0</title>
     <style>
         :root {
             --bg-color: #0f0f0f;
@@ -23,11 +23,22 @@
             touch-action: none;
         }
 
+        /* Persistent UI Layer */
+        #currency-display { 
+            position: fixed; top: 20px; right: 20px; 
+            font-size: 20px; color: var(--accent); 
+            z-index: 500; font-weight: bold;
+            text-shadow: 2px 2px #000;
+        }
+        #lives-display { 
+            position: fixed; top: 20px; left: 50%; 
+            transform: translateX(-50%); font-size: 26px; 
+            z-index: 500; 
+        }
+
         #game-container { 
             position: relative; width: 100vw; height: 100vh; 
             display: flex; overflow: hidden; 
-            padding-bottom: env(safe-area-inset-bottom);
-            box-sizing: border-box;
         }
         
         .bg-half { flex: 1; height: 100%; opacity: 0.12; pointer-events: none; }
@@ -36,14 +47,14 @@
 
         .lane-label {
             position: absolute; bottom: 100px; font-size: 120px; font-weight: 900;
-            color: var(--accent); opacity: 0.15; z-index: 1; pointer-events: none;
+            color: var(--accent); opacity: 0.2; z-index: 2; pointer-events: none;
         }
         #l-label { left: 10%; }
         #r-label { right: 10%; }
 
         .side-stack {
             position: absolute; bottom: 80px; width: 160px; height: auto;
-            display: flex; flex-direction: column-reverse; z-index: 5;
+            display: flex; flex-direction: column-reverse; z-index: 10;
             padding: 10px; box-sizing: border-box; pointer-events: none;
         }
         #left-stack { left: 0; align-items: flex-start; }
@@ -61,17 +72,17 @@
             position: absolute; width: 100px; height: 100px;
             background-color: #34495e; border: 4px solid var(--accent);
             border-radius: 24px; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 32px; z-index: 10;
+            font-weight: bold; font-size: 32px; z-index: 20;
             box-shadow: 0 12px 35px rgba(0,0,0,0.8); cursor: pointer;
         }
 
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes starBurst {
             0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.15); filter: brightness(1.8) drop-shadow(0 0 20px var(--accent)); }
+            50% { transform: scale(1.1); filter: brightness(1.6) drop-shadow(0 0 15px var(--accent)); }
             100% { transform: scale(1); filter: brightness(1); }
         }
-        .purchased-anim { animation: starBurst 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .purchased-anim { animation: starBurst 0.5s ease; }
 
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -80,33 +91,40 @@
             z-index: 300; text-align: center; padding: 20px; box-sizing: border-box;
         }
 
+        /* Scalable Shop Layout */
+        #shop-menu { justify-content: flex-start; padding-top: 60px; }
         #shopkeeper-area {
-            background: #000; border: 4px solid #fff; border-radius: 10px;
-            width: 90%; height: 200px; margin-bottom: 20px;
+            background: #000; border: 3px solid #fff; border-radius: 10px;
+            width: 100%; min-height: 140px; margin-bottom: 15px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 15px;
+            padding: 10px; box-sizing: border-box; flex-shrink: 0;
         }
-        #shopkeeper-text { font-size: 18px; color: #fff; line-height: 1.4; min-height: 80px; }
+        #shopkeeper-text { font-size: 16px; color: #fff; line-height: 1.4; }
 
-        .popup-modal {
-            background: rgba(30, 39, 46, 0.6);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--accent); border-radius: 30px;
-            padding: 30px; width: 85%; z-index: 400;
+        .shop-container {
+            width: 100%; display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 10px; overflow-y: auto; flex-grow: 1; margin-bottom: 10px;
+        }
+
+        .item-card {
+            background: #222; padding: 8px; border-radius: 10px;
+            display: flex; flex-direction: column; align-items: center;
         }
 
         .hidden { display: none !important; }
 
         button {
-            padding: 16px 32px; font-size: 16px; border-radius: 40px;
+            padding: 12px 20px; font-size: 14px; border-radius: 40px;
             border: none; background: #3498db; color: white; cursor: pointer;
-            margin: 5px; font-weight: bold; font-family: 'Courier New', Courier, monospace;
+            font-weight: bold; font-family: inherit; margin: 4px;
         }
-        button:active { transform: scale(0.95); }
+        button:disabled { background: #444; color: #888; }
         .active-yellow { background: var(--accent) !important; color: #000 !important; }
 
-        #lives-display { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); font-size: 26px; z-index: 150; }
-        #currency-display { position: fixed; top: 20px; right: 20px; font-size: 18px; color: var(--accent); z-index: 200; font-weight: bold; }
+        .tower-item {
+            background: #222; width: 85%; margin: 6px; padding: 15px;
+            border-radius: 10px; border: 2px solid #444;
+        }
     </style>
 </head>
 <body>
@@ -124,56 +142,54 @@
 </div>
 
 <div id="main-menu" class="overlay">
-    <h1 style="color: var(--accent); font-size: 2.5rem;">PHONETIC FLOW</h1>
-    <p id="level-display-name" style="color: #888;"></p>
-    <button onclick="startGame()" style="background: var(--l-color); width: 220px;">START</button>
-    <button id="btn-world-map" onclick="showMenu('level-select')" style="width: 220px;">WORLD MAP</button>
-    <button onclick="showMenu('shop-menu')" style="width: 220px;">STICKER SHOP</button>
-    <button onclick="showMenu('sticker-book')" style="width: 220px;">MY BOOK</button>
+    <h1 style="color: var(--accent); margin-bottom: 5px;">PHONETIC FLOW</h1>
+    <p id="level-display-name" style="color: #888; margin-bottom: 20px;"></p>
+    <button onclick="startGame()" style="background: var(--l-color); width: 200px;">START</button>
+    <button id="btn-world-map" onclick="showMenu('level-select')" style="width: 200px;" class="hidden">WORLD MAP</button>
+    <button onclick="showMenu('shop-menu')" style="width: 200px;">STICKER SHOP</button>
+    <button onclick="showMenu('sticker-book')" style="width: 200px;">MY BOOK</button>
 </div>
 
 <div id="level-select" class="overlay hidden">
     <h2 style="color: var(--accent)">ASCENDING TOWER</h2>
     <div id="tower-list" style="display: flex; flex-direction: column-reverse; width: 100%; align-items: center;"></div>
-    <button onclick="showMenu('main-menu')" style="background: #444; margin-top: 20px;">BACK</button>
-</div>
-
-<div id="pause-menu" class="overlay hidden" style="background: rgba(0,0,0,0.2);">
-    <div class="popup-modal">
-        <h2 style="color: var(--accent);">PAUSED</h2>
-        <div style="margin: 20px 0;">
-            <p style="font-size: 14px; opacity: 0.7;">VOICE SPEED</p>
-            <button id="speed-0.7" onclick="setSpeed(0.7)">🐢</button>
-            <button id="speed-1.0" onclick="setSpeed(1.0)">🧑</button>
-            <button id="speed-1.3" onclick="setSpeed(1.3)">⚡</button>
-        </div>
-        <button onclick="closeMenus()" style="background: var(--l-color); width: 80%;">RESUME</button>
-        <button onclick="location.reload()" style="background: #444; width: 80%;">EXIT</button>
-    </div>
+    <button onclick="showMenu('main-menu')" style="background: #444; margin-top: 15px;">BACK</button>
 </div>
 
 <div id="shop-menu" class="overlay hidden">
     <div id="shopkeeper-area">
-        <div style="font-size: 40px;">🧙‍♂️</div>
+        <div style="font-size: 30px;">🧙‍♂️</div>
         <div id="shopkeeper-text"></div>
     </div>
     <div id="shop-items-grid" class="shop-container"></div>
-    <div id="trade-ui" class="hidden">
-        <div id="trade-options" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
+    <div id="trade-ui" class="hidden" style="flex-grow:1">
+        <div id="trade-options" style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px;"></div>
     </div>
-    <button onclick="showMenu('main-menu')" style="width: 80%; background: #444; margin-top: 15px;">BACK</button>
+    <button onclick="showMenu('main-menu')" style="width: 80%; background: #444; margin-top: auto;">BACK</button>
 </div>
 
 <div id="sticker-book" class="overlay hidden">
-    <h2>COLLECTION</h2>
-    <div id="book-display" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;"></div>
-    <button onclick="showMenu('main-menu')">BACK</button>
+    <h2 style="margin-top: 40px;">COLLECTION</h2>
+    <div id="book-display" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; width:100%; padding:10px; box-sizing:border-box; overflow-y:auto;"></div>
+    <button onclick="showMenu('main-menu')" style="background: #444; margin-top: auto;">BACK</button>
+</div>
+
+<div id="pause-menu" class="overlay hidden" style="background: rgba(0,0,0,0.6);">
+    <div style="background: #1e272e; padding: 30px; border-radius: 20px; border: 1px solid var(--accent); width: 80%;">
+        <h2 style="color: var(--accent);">PAUSED</h2>
+        <div style="margin: 20px 0;">
+            <button onclick="setSpeed(0.7)">🐢</button>
+            <button onclick="setSpeed(1.0)">🧑</button>
+            <button onclick="setSpeed(1.3)">⚡</button>
+        </div>
+        <button onclick="closeMenus()" style="background: var(--l-color); width: 100%;">RESUME</button>
+    </div>
 </div>
 
 <div id="round-win" class="overlay hidden">
     <h1 style="color: var(--l-color);">CLEAR!</h1>
     <p>Bonus: 💰 +50</p>
-    <button onclick="showMenu('main-menu')">AWESOME</button>
+    <button onclick="showMenu('main-menu')">CONTINUE</button>
 </div>
 
 <div id="game-over" class="overlay hidden">
@@ -187,20 +203,18 @@
         1: { name: "L vs R Forest", sigil: "🌲", pairs: [
             {word:"Light",type:"L"},{word:"Right",type:"R"},{word:"Glass",type:"L"},{word:"Grass",type:"R"},
             {word:"Collect",type:"L"},{word:"Correct",type:"R"},{word:"Tall",type:"L"},{word:"Door",type:"R"},
-            {word:"Play",type:"L"},{word:"Pray",type:"R"},{word:"Lace",type:"L"},{word:"Race",type:"R"}
+            {word:"Play",type:"L"},{word:"Pray",type:"R"}
         ], stickers: [
             {emoji:"☁️", price:50}, {emoji:"🌱", price:100}, {emoji:"🌲", price:200}, {emoji:"🦅", price:300}, {emoji:"💎", price:500}
         ]},
         2: { name: "V vs B Valley", sigil: "🌊", pairs: [
             {word:"Vest",type:"L"},{word:"Best",type:"R"},{word:"Vote",type:"L"},{word:"Boat",type:"R"},
-            {word:"Van",type:"L"},{word:"Ban",type:"R"},{word:"Vase",type:"L"},{word:"Base",type:"R"},
-            {word:"Vent",type:"L"},{word:"Bent",type:"R"}
+            {word:"Van",type:"L"},{word:"Ban",type:"R"},{word:"Vase",type:"L"},{word:"Base",type:"R"}
         ], stickers: [
             {emoji:"💧", price:50}, {emoji:"🐚", price:100}, {emoji:"🦀", price:200}, {emoji:"🦈", price:300}, {emoji:"🔱", price:500}
         ]},
         3: { name: "Eat vs It Peak", sigil: "🏔️", pairs: [
-            {word:"Eat",type:"L"},{word:"It",type:"R"},{word:"Seat",type:"L"},{word:"Sit",type:"R"},
-            {word:"Feet",type:"L"},{word:"Fit",type:"R"}
+            {word:"Eat",type:"L"},{word:"It",type:"R"},{word:"Seat",type:"L"},{word:"Sit",type:"R"}
         ], stickers: [
             {emoji:"❄️", price:50}, {emoji:"🧤", price:100}, {emoji:"⛺", price:200}, {emoji:"🎿", price:300}, {emoji:"🗻", price:500}
         ]}
@@ -245,7 +259,7 @@
         grid.innerHTML = ""; grid.classList.remove('hidden'); trade.classList.add('hidden');
 
         if (inv >= 500 && !hasSigil(state.curLevel)) {
-            typeWriter("You have trained well. Trade a rare sticker for the Sigil?", () => {
+            typeWriter("Trade a rare sticker for the Sigil of " + levels[state.curLevel].sigil + "?", () => {
                 grid.classList.add('hidden'); trade.classList.remove('hidden');
                 const opts = document.getElementById('trade-options'); opts.innerHTML = "";
                 const unique = [...new Set(state.inventory.filter(i => i.level === state.curLevel).map(i => i.emoji))];
@@ -255,14 +269,14 @@
                 });
             });
         } else {
-            typeWriter("Currency from this floor only. What do you seek?");
+            typeWriter("Floor " + state.curLevel + " artifacts. What do you seek?");
             levels[state.curLevel].stickers.forEach((item, idx) => {
                 const count = state.inventory.filter(i => i.emoji === item.emoji).length;
                 const card = document.createElement('div');
+                card.className = "item-card";
                 card.id = `shop-item-${idx}`;
-                card.style = "background:#222; padding:10px; border-radius:10px;";
-                card.innerHTML = `<div style="font-size:30px;">${item.emoji}</div>
-                                  <button onclick="buyItem('${item.emoji}', ${item.price}, ${idx})" ${count >= 2 ? 'disabled' : ''}>💰${item.price}</button>`;
+                card.innerHTML = `<div style="font-size:24px; margin-bottom:5px;">${item.emoji}</div>
+                                  <button onclick="buyItem('${item.emoji}', ${item.price}, ${idx})" ${count >= 2 ? 'disabled' : ''} style="font-size:11px; width:100%;">💰${item.price}</button>`;
                 grid.appendChild(card);
             });
         }
@@ -270,37 +284,35 @@
 
     function buyItem(emoji, price, idx) {
         if (state.coins[state.curLevel] >= price) {
-            const card = document.getElementById(`shop-item-${idx}`);
-            card.classList.add('purchased-anim');
+            document.getElementById(`shop-item-${idx}`).classList.add('purchased-anim');
             state.coins[state.curLevel] -= price;
             state.invest[state.curLevel] += price;
             state.inventory.push({emoji, level: state.curLevel});
-            setTimeout(() => { renderShop(); updateUI(); }, 600);
+            setTimeout(() => { renderShop(); updateUI(); }, 500);
         }
     }
 
     function processTrade(emoji) {
         const price = levels[state.curLevel].stickers.find(s => s.emoji === emoji).price;
-        if(price <= 50) { typeWriter("Hmph. Too common. Bring me rarity."); return; }
-        
+        if(price <= 50) { typeWriter("That is too common. Bring me rarity."); return; }
         const idx = state.inventory.findIndex(i => i.emoji === emoji);
         state.inventory.splice(idx, 1);
         state.inventory.push({emoji: levels[state.curLevel].sigil, level: state.curLevel, isSigil: true});
         state.maxLevel = Math.max(state.maxLevel, state.curLevel + 1);
-        typeWriter("Exquisite. The path is open.");
-        setTimeout(() => showMenu('main-menu'), 2000);
+        typeWriter("The path ascends.");
+        setTimeout(() => showMenu('main-menu'), 1500);
     }
 
     function renderTower() {
         const list = document.getElementById('tower-list'); list.innerHTML = "";
         for(let i=1; i<=3; i++) {
             const div = document.createElement('div');
+            div.className = "tower-item";
             const isLocked = i > state.maxLevel;
-            div.style = `background:#222; width:80%; margin:5px; padding:15px; border-radius:10px; border:2px solid ${state.curLevel === i ? 'var(--accent)' : '#444'}; opacity:${isLocked ? 0.5 : 1}`;
+            div.style.borderColor = (state.curLevel === i) ? 'var(--accent)' : '#444';
+            div.style.opacity = isLocked ? "0.4" : "1";
             div.innerHTML = `Floor ${i}: ${levels[i].name} ${isLocked ? '🔒' : '✅'}`;
-            if(!isLocked && (state.maxLevel >= 3 || i === state.curLevel)) {
-                div.onclick = () => { state.curLevel = i; showMenu('main-menu'); };
-            }
+            if(!isLocked) div.onclick = () => { state.curLevel = i; showMenu('main-menu'); };
             list.appendChild(div);
         }
     }
@@ -347,36 +359,29 @@
         const brick = document.createElement('div');
         brick.className = 'brick'; brick.innerText = currentBlock.data.word;
         brick.style.background = isCorrect ? 'var(--l-color)' : 'var(--r-color)';
-        document.getElementById(choice === 'L' || (!choice && currentBlock.data.type === 'R') ? 'left-stack' : 'right-stack').appendChild(brick);
-
+        const target = (choice === 'L' || (!choice && currentBlock.data.type === 'R')) ? 'left-stack' : 'right-stack';
+        document.getElementById(target).appendChild(brick);
         if (isCorrect) { state.roundHits++; state.coins[state.curLevel] += 10; }
         else { state.lives--; if(state.lives <= 0) return showMenu('game-over'); }
-        
         cleanup(); updateUI();
         if(state.roundHits >= 15) { state.coins[state.curLevel] += 50; setTimeout(() => showMenu('round-win'), 500); }
         else setTimeout(spawnBlock, 400);
     }
 
-    function setSpeed(s) {
-        state.speed = s;
-        document.querySelectorAll('.popup-modal button').forEach(b => b.classList.remove('active-yellow'));
-        document.getElementById(`speed-${s.toFixed(1)}`)?.classList.add('active-yellow');
-    }
+    function setSpeed(s) { state.speed = s; updateUI(); }
 
     function updateUI() {
         document.getElementById('currency-display').innerText = `💰 ${state.coins[state.curLevel]}`;
         document.getElementById('lives-display').innerText = "❤️".repeat(Math.max(0, state.lives));
-        document.getElementById('level-display-name').innerText = `Level ${state.curLevel}: ${levels[state.curLevel].name}`;
-        const worldBtn = document.getElementById('btn-world-map');
-        if(state.maxLevel >= 3) worldBtn.classList.remove('hidden'); else worldBtn.classList.add('hidden');
-        setSpeed(state.speed);
+        document.getElementById('level-display-name').innerText = levels[state.curLevel].name;
+        if(state.maxLevel >= 2) document.getElementById('btn-world-map').classList.remove('hidden');
     }
 
     function cleanup() { if(currentBlock) currentBlock.element.remove(); currentBlock = null; cancelAnimationFrame(animationId); }
     function closeMenus() { document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden')); state.isPaused = false; if(!currentBlock && state.roundHits < 15) spawnBlock(); else animate(); }
     function renderBook() { 
         const b = document.getElementById('book-display'); b.innerHTML = "";
-        state.inventory.forEach(i => { const d = document.createElement('div'); d.style="font-size:40px;"; d.innerText=i.emoji; b.appendChild(d); });
+        state.inventory.forEach(i => { const d = document.createElement('div'); d.style="font-size:35px; background:#222; padding:10px; border-radius:10px;"; d.innerText=i.emoji; b.appendChild(d); });
     }
     function hasSigil(lv) { return state.inventory.some(i => i.level === lv && i.isSigil); }
     function speak(t, c) { synth.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang='en-US'; u.rate=state.speed; if(c) u.onstart=c; synth.speak(u); }
