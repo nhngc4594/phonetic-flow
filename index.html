@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Phonetic Flow v2.5</title>
+    <title>Phonetic Flow v2.5.2</title>
     <style>
         :root {
             --bg-color: #0f0f0f;
@@ -19,10 +19,10 @@
             background-color: var(--bg-color);
             font-family: 'Segoe UI', system-ui, sans-serif;
             color: var(--text-color); user-select: none;
-            touch-action: manipulation;
+            touch-action: none; /* Prevents mobile zooming/scrolling during play */
         }
 
-        #game-container { position: relative; width: 100vw; height: 100vh; display: flex; }
+        #game-container { position: relative; width: 100vw; height: 100vh; display: flex; overflow: hidden; }
         .bg-half { flex: 1; height: 100%; opacity: 0.12; pointer-events: none; }
         #l-bg { background-color: var(--l-color); border-right: 1px solid #333; }
         #r-bg { background-color: var(--r-color); }
@@ -31,6 +31,7 @@
             position: absolute; bottom: 0; width: 160px; height: 100%;
             display: flex; flex-direction: column-reverse; z-index: 5;
             padding: 10px; box-sizing: border-box; pointer-events: none;
+            max-height: 85vh; overflow: hidden;
         }
         #left-stack { left: 0; align-items: flex-start; }
         #right-stack { right: 0; align-items: flex-end; }
@@ -40,7 +41,7 @@
             border-radius: 6px; display: flex; align-items: center; justify-content: center;
             font-size: 13px; font-weight: bold; color: white;
             box-shadow: 0 4px 6px rgba(0,0,0,0.4);
-            animation: slideIn 0.2s ease-out;
+            animation: slideIn 0.2s ease-out; flex-shrink: 0;
         }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
@@ -57,6 +58,7 @@
             border-radius: 24px; display: flex; align-items: center; justify-content: center;
             font-weight: bold; font-size: 32px; z-index: 10;
             box-shadow: 0 12px 35px rgba(0,0,0,0.8); cursor: pointer;
+            touch-action: none;
         }
 
         .nav-btn {
@@ -73,7 +75,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.98); display: flex;
             flex-direction: column; align-items: center; justify-content: center;
-            z-index: 100; text-align: center; padding: 20px;
+            z-index: 100; text-align: center; padding: 20px; box-sizing: border-box;
         }
         .hidden { display: none !important; }
 
@@ -84,8 +86,16 @@
         }
         button:active { transform: scale(0.95); }
         .active-yellow { background: var(--accent) !important; color: #000 !important; }
+        
         #lives-display { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); font-size: 26px; z-index: 150; }
         #score-display { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 14px; opacity: 0.6; z-index: 150; }
+
+        /* Shop Container Logic */
+        .shop-container {
+            width: 100%; flex-grow: 1; overflow-y: auto;
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 15px; padding: 20px; box-sizing: border-box; margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -106,8 +116,8 @@
 </div>
 
 <div id="main-menu" class="overlay">
-    <h1 style="color: var(--accent); font-size: 3.5rem; margin-bottom:0;">PHONETIC FLOW</h1>
-    <p id="menu-coin-text" style="font-size: 1.5rem; margin-top:5px;">💰 0</p>
+    <h1 style="color: var(--accent); font-size: 3.5rem; margin:0;">PHONETIC FLOW</h1>
+    <p id="menu-coin-text" style="font-size: 1.5rem; margin:10px 0;">💰 0</p>
     <button onclick="startGame()" style="font-size: 1.5rem; background: var(--l-color); padding: 20px 50px;">GO TO MISSION</button>
     <button onclick="showMenu('sticker-book')">MY STICKER BOOK</button>
     <button onclick="showMenu('shop-menu')">ECONOMY SHOP</button>
@@ -124,11 +134,11 @@
     <button onclick="closeMenus()" style="margin-top: 40px; background: #666;">RESUME</button>
 </div>
 
-<div id="shop-menu" class="overlay hidden" style="justify-content: flex-start; padding-top: 80px;">
+<div id="shop-menu" class="overlay hidden">
     <h2>SHOP</h2>
-    <p>Available Balance: 💰 <span id="shop-coins">0</span></p>
-    <div id="shop-display" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin:20px; overflow-y: auto; max-height: 60vh; width: 100%;"></div>
-    <button onclick="showMenu('main-menu')" style="flex-shrink: 0; margin-bottom: 40px;">BACK TO MENU</button>
+    <p>Available: 💰 <span id="shop-coins">0</span></p>
+    <div id="shop-display" class="shop-container"></div>
+    <button onclick="showMenu('main-menu')" style="width: 80%; background: #444;">BACK TO MENU</button>
 </div>
 
 <div id="sticker-book" class="overlay hidden">
@@ -143,7 +153,6 @@
 
 <div id="game-over" class="overlay hidden">
     <h1 style="color: var(--r-color); font-size: 3rem;">KEEP GOING!</h1>
-    <p style="font-size: 1.2rem;">Don't give up! You're getting better with every sound.<br>Ready to try again?</p>
     <button onclick="startGame()" style="background: var(--l-color);">YES, LET'S DO IT!</button>
     <button onclick="showMenu('main-menu')" style="background: #444;">MAIN MENU</button>
 </div>
@@ -184,8 +193,7 @@
     function setSpeed(s) {
         state.speed = parseFloat(s);
         document.querySelectorAll('#settings-menu button').forEach(b => b.classList.remove('active-yellow'));
-        // Correctly target the ID by replacing dot with hyphen or just using the number
-        const btn = document.getElementById(`speed-${s.toFixed(1)}`) || document.getElementById(`speed-${s}`);
+        const btn = document.getElementById(`speed-${s.toFixed(1)}`);
         if(btn) btn.classList.add('active-yellow');
     }
 
@@ -194,7 +202,7 @@
         const u = new SpeechSynthesisUtterance(text);
         u.lang = 'en-US';
         u.rate = state.speed;
-        u.onstart = () => { if(callback) callback(); };
+        if(callback) u.onstart = callback;
         synth.speak(u);
     }
 
@@ -211,8 +219,12 @@
     function closeMenus() {
         document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden'));
         state.isPaused = false;
-        if (!currentBlock) spawnBlock();
-        else animate();
+        // Logic check: only spawn if game isn't finished
+        if (!currentBlock && state.roundHits < 10 && state.lives > 0) {
+            spawnBlock();
+        } else if (currentBlock) {
+            animate();
+        }
     }
 
     function startGame() {
@@ -224,26 +236,24 @@
     }
 
     function spawnBlock() {
-        if (state.isPaused || state.lives <= 0) return;
+        if (state.isPaused || state.lives <= 0 || state.roundHits >= 10) return;
+        
         const pair = pairs[Math.floor(Math.random() * pairs.length)];
         
-        // The Physics only starts when the Audio actually starts
         speak(pair.word, () => {
-            if(state.isPaused) return;
+            if(state.isPaused || currentBlock) return; 
+            
             const el = document.createElement('div');
             el.className = 'block';
             el.innerText = "?";
             el.style.left = "calc(50% - 50px)";
             el.style.top = "0px";
             
-            el.onclick = (e) => {
+            // Re-trigger audio on block tap
+            el.addEventListener('pointerdown', (e) => {
                 e.stopPropagation();
-                state.isPaused = !state.isPaused;
-                if(!state.isPaused) {
-                    speak(pair.word);
-                    animate();
-                }
-            };
+                speak(pair.word);
+            });
 
             document.getElementById('game-container').appendChild(el);
             currentBlock = { element: el, data: pair, top: 0 };
@@ -260,13 +270,15 @@
         else animationId = requestAnimationFrame(animate);
     }
 
-    window.addEventListener('mousedown', (e) => {
+    window.addEventListener('pointerdown', (e) => {
         if (state.isPaused || !currentBlock || e.target.closest('.nav-btn') || e.target.closest('.block')) return;
         const side = (e.clientX < window.innerWidth / 2) ? "L" : "R";
         resolve(side);
     });
 
     function resolve(choice) {
+        if (!currentBlock) return;
+        
         const data = currentBlock.data;
         const isCorrect = choice === data.type;
         
@@ -296,7 +308,7 @@
         
         if(state.roundHits >= 10) {
             state.coins += 50;
-            showMenu('round-win');
+            setTimeout(() => showMenu('round-win'), 500);
         } else {
             setTimeout(spawnBlock, 400);
         }
@@ -316,7 +328,8 @@
             card.style = "background:#222; padding:15px; border-radius:12px; display:flex; flex-direction:column; align-items:center;";
             card.innerHTML = `
                 <div style="font-size:35px; margin-bottom:10px;">${item.emoji}</div>
-                <button onclick="buyItem('${item.emoji}', ${item.price}, '${item.type || 'sticker'}')" style="padding:8px 15px; font-size:14px; margin:0;">💰 ${item.price}</button>
+                <button onclick="buyItem('${item.emoji}', ${item.price}, '${item.type || 'sticker'}')" 
+                        style="padding:8px 10px; font-size:14px; margin:0; width:100%;">💰 ${item.price}</button>
             `;
             container.appendChild(card);
         });
@@ -330,7 +343,7 @@
             else state.unlocked.push(emoji);
             renderShop();
             updateUI();
-        } else alert("Keep training! You need more coins.");
+        } else alert("Not enough coins!");
     }
 
     function renderBook() {
@@ -346,18 +359,16 @@
     }
 
     function copyShare() {
-        const text = `🎧 PHONETIC FLOW REPORT\nAccuracy: ${state.totalCorrect} hits\nStickers: ${state.unlocked.join(' ')}\nTrain your ears at home!`;
-        navigator.clipboard.writeText(text).then(() => alert("Scout Report copied!"));
+        const text = `🎧 PHONETIC FLOW REPORT\nAccuracy: ${state.totalCorrect} hits\nStickers: ${state.unlocked.join(' ')}`;
+        navigator.clipboard.writeText(text).then(() => alert("Copied!"));
     }
 
     function updateUI() {
         document.getElementById('menu-coin-text').innerText = `💰 ${state.coins}`;
         document.getElementById('lives-display').innerText = "❤️".repeat(Math.max(0, state.lives));
         document.getElementById('round-hits').innerText = state.roundHits;
-        setSpeed(state.speed);
     }
 
-    // Initial load
     setSpeed(1.0);
 </script>
 </body>
