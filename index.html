@@ -107,10 +107,35 @@
             gap: 10px; overflow-y: auto; flex-grow: 1; margin-bottom: 10px;
         }
 
-        .item-card {
-            background: #222; padding: 8px; border-radius: 10px;
-            display: flex; flex-direction: column; align-items: center;
+       /* 1. Bigger, bolder Coin Display */
+        #currency-display { 
+            position: fixed; top: 20px; right: 20px; 
+            font-size: 28px; /* Bigger font */
+            color: var(--accent); z-index: 500; font-weight: 900;
+            background: rgba(0,0,0,0.7); padding: 8px 20px;
+            border-radius: 30px; border: 2px solid var(--accent);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
+
+        /* 2. The Gold Sparkle Animation */
+        @keyframes goldSparkle {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.4); filter: brightness(2) drop-shadow(0 0 20px #f1c40f); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        .purchased-anim { animation: goldSparkle 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        /* 3. Clean Sticker Grid (No Boxes) */
+        .item-card {
+            background: transparent; /* Box is gone! */
+            padding: 5px;
+            display: flex; flex-direction: column; align-items: center;
+            transition: transform 0.2s;
+        }
+
+        /* 4. The Back Button Color (Deep Royal Blue) */
+        .btn-back { background: #2980b9 !important; width: 100%; margin-top: auto; }
+        .btn-back:active { background: #3498db !important; }
 
         .hidden { display: none !important; }
 
@@ -164,16 +189,17 @@
 
 <div id="shop-menu" class="overlay hidden">
     <div id="shopkeeper-area">
-        <div style="font-size: 30px;">🧙‍♂️</div>
-        <div id="shopkeeper-text"></div>
+        <div style="font-size: 50px;">🧙‍♂️</div> <div id="shopkeeper-text" style="font-weight: bold; text-transform: uppercase;"></div>
     </div>
-    <div id="shop-items-grid" class="shop-container"></div>
-    <div id="trade-ui" class="hidden" style="flex-grow:1">
-        <div id="trade-options" style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px;"></div>
-    </div>
-    <button onclick="showMenu('main-menu')" style="width: 80%; background: #444; margin-top: auto;">BACK</button>
-</div>
 
+    <div id="shop-items-grid" class="shop-container"></div>
+
+    <div id="trade-ui" class="hidden">
+        <div id="trade-options" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
+    </div>
+
+    <button onclick="showMenu('main-menu')" class="btn-back">BACK TO MENU</button>
+</div>
 <div id="sticker-book" class="overlay hidden">
     <h2 style="margin-top: 40px;">COLLECTION</h2>
     <div id="book-display" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; width:100%; padding:10px; box-sizing:border-box; overflow-y:auto;"></div>
@@ -276,48 +302,46 @@
         grid.innerHTML = ""; grid.classList.remove('hidden'); trade.classList.add('hidden');
 
         if (inv >= 500 && !hasSigil(state.curLevel)) {
-            typeWriter("Trade a rare sticker for the Sigil of " + levels[state.curLevel].sigil + "?", () => {
-                grid.classList.add('hidden'); trade.classList.remove('hidden');
-                const opts = document.getElementById('trade-options'); opts.innerHTML = "";
-                const unique = [...new Set(state.inventory.filter(i => i.level === state.curLevel).map(i => i.emoji))];
-                unique.forEach(emo => {
-                    const b = document.createElement('button'); b.innerText = emo;
-                    b.onclick = () => processTrade(emo); opts.appendChild(b);
-                });
+            // Simple English for the Sigil Trade
+            typeWriter("YOU ARE READY. TRADE A RARE STICKER FOR THE MAGIC SIGIL?");
+            grid.classList.add('hidden'); trade.classList.remove('hidden');
+            const opts = document.getElementById('trade-options'); opts.innerHTML = "";
+            const unique = [...new Set(state.inventory.filter(i => i.level === state.curLevel).map(i => i.emoji))];
+            unique.forEach(emo => {
+                const b = document.createElement('button'); b.innerText = emo;
+                b.style.fontSize = "30px";
+                b.onclick = () => processTrade(emo); opts.appendChild(b);
             });
         } else {
-            typeWriter("Floor " + state.curLevel + " artifacts. What do you seek?");
+            // Simple greeting
+            typeWriter("WELCOME! USE FLOOR " + state.curLevel + " COINS. BUY STICKERS!");
             levels[state.curLevel].stickers.forEach((item, idx) => {
                 const count = state.inventory.filter(i => i.emoji === item.emoji).length;
                 const card = document.createElement('div');
                 card.className = "item-card";
                 card.id = `shop-item-${idx}`;
-                card.innerHTML = `<div style="font-size:24px; margin-bottom:5px;">${item.emoji}</div>
-                                  <button onclick="buyItem('${item.emoji}', ${item.price}, ${idx})" ${count >= 2 ? 'disabled' : ''} style="font-size:11px; width:100%;">💰${item.price}</button>`;
+                // Sticker Emoji size increased to 42px
+                card.innerHTML = `<div style="font-size:42px; margin-bottom:10px;">${item.emoji}</div>
+                                  <button onclick="buyItem('${item.emoji}', ${item.price}, ${idx})" 
+                                  ${count >= 2 ? 'disabled' : ''} 
+                                  style="font-size:12px; width:80px; padding:8px 0;">💰${item.price}</button>`;
                 grid.appendChild(card);
             });
         }
     }
 
-    function buyItem(emoji, price, idx) {
-        if (state.coins[state.curLevel] >= price) {
-            document.getElementById(`shop-item-${idx}`).classList.add('purchased-anim');
-            state.coins[state.curLevel] -= price;
-            state.invest[state.curLevel] += price;
-            state.inventory.push({emoji, level: state.curLevel});
-            setTimeout(() => { renderShop(); updateUI(); }, 500);
-        }
-    }
-
     function processTrade(emoji) {
         const price = levels[state.curLevel].stickers.find(s => s.emoji === emoji).price;
-        if(price <= 50) { typeWriter("That is too common. Bring me rarity."); return; }
+        if(price <= 50) { 
+            typeWriter("NO. THAT IS TOO COMMON. GIVE ME A RARE STICKER."); 
+            return; 
+        }
         const idx = state.inventory.findIndex(i => i.emoji === emoji);
         state.inventory.splice(idx, 1);
         state.inventory.push({emoji: levels[state.curLevel].sigil, level: state.curLevel, isSigil: true});
         state.maxLevel = Math.max(state.maxLevel, state.curLevel + 1);
-        typeWriter("The path ascends.");
-        setTimeout(() => showMenu('main-menu'), 1500);
+        typeWriter("THANK YOU! THE NEXT FLOOR IS OPEN.");
+        setTimeout(() => showMenu('main-menu'), 2000);
     }
 
     function renderTower() {
