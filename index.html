@@ -69,10 +69,11 @@
         }
 
         .block {
-            position: absolute; width: 100px; height: 100px;
+            position: absolute; 
+            width: 120px; height: 120px; /* Made bigger for easier tapping */
             background-color: #34495e; border: 4px solid var(--accent);
             border-radius: 24px; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 32px; z-index: 20;
+            font-weight: bold; font-size: 40px; z-index: 20;
             box-shadow: 0 12px 35px rgba(0,0,0,0.8); cursor: pointer;
         }
 
@@ -125,6 +126,11 @@
             background: #222; width: 85%; margin: 6px; padding: 15px;
             border-radius: 10px; border: 2px solid #444;
         }
+#pause-menu { 
+            background: rgba(0,0,0,0.4) !important; 
+            backdrop-filter: blur(8px); 
+            -webkit-backdrop-filter: blur(8px); 
+        }
     </style>
 </head>
 <body>
@@ -174,18 +180,29 @@
     <button onclick="showMenu('main-menu')" style="background: #444; margin-top: auto;">BACK</button>
 </div>
 
-<div id="pause-menu" class="overlay hidden" style="background: rgba(0,0,0,0.6);">
-    <div style="background: #1e272e; padding: 30px; border-radius: 20px; border: 1px solid var(--accent); width: 80%;">
+<div id="pause-menu" class="overlay hidden">
+    <div style="background: rgba(30, 39, 46, 0.9); padding: 30px; border-radius: 20px; border: 1px solid var(--accent); width: 85%;">
         <h2 style="color: var(--accent);">PAUSED</h2>
-        <div style="margin: 20px 0;">
-            <button onclick="setSpeed(0.7)">🐢</button>
-            <button onclick="setSpeed(1.0)">🧑</button>
-            <button onclick="setSpeed(1.3)">⚡</button>
+        
+        <div style="display: flex; justify-content: space-around; margin: 20px 0;">
+            <div style="text-align: center;">
+                <button id="speed-0.7" onclick="setSpeed(0.7)" style="font-size: 30px;">🐢</button>
+                <p style="font-size: 12px; margin-top: 5px;">SLOW</p>
+            </div>
+            <div style="text-align: center;">
+                <button id="speed-1.0" onclick="setSpeed(1.0)" style="font-size: 30px;">🧑</button>
+                <p style="font-size: 12px; margin-top: 5px;">NORMAL</p>
+            </div>
+            <div style="text-align: center;">
+                <button id="speed-1.3" onclick="setSpeed(1.3)" style="font-size: 30px;">⚡</button>
+                <p style="font-size: 12px; margin-top: 5px;">FAST</p>
+            </div>
         </div>
-        <button onclick="closeMenus()" style="background: var(--l-color); width: 100%;">RESUME</button>
+
+        <button onclick="closeMenus()" style="background: var(--l-color); width: 100%; margin-bottom: 10px;">RESUME</button>
+        <button onclick="location.reload()" style="background: #e74c3c; width: 100%;">EXIT GAME</button>
     </div>
 </div>
-
 <div id="round-win" class="overlay hidden">
     <h1 style="color: var(--l-color);">CLEAR!</h1>
     <p>Bonus: 💰 +50</p>
@@ -370,15 +387,38 @@
 
     function setSpeed(s) { state.speed = s; updateUI(); }
 
+    function setSpeed(s) { state.speed = s; updateUI(); }
+
+ function setSpeed(s) {
+        state.speed = s;
+        // This ensures the button you click turns yellow
+        document.querySelectorAll('#pause-menu button').forEach(b => b.classList.remove('active-yellow'));
+        const btn = document.getElementById(`speed-${s.toFixed(1)}`);
+        if(btn) btn.classList.add('active-yellow');
+    }
+
     function updateUI() {
         document.getElementById('currency-display').innerText = `💰 ${state.coins[state.curLevel]}`;
         document.getElementById('lives-display').innerText = "❤️".repeat(Math.max(0, state.lives));
         document.getElementById('level-display-name').innerText = levels[state.curLevel].name;
         if(state.maxLevel >= 2) document.getElementById('btn-world-map').classList.remove('hidden');
+        // This ensures the correct button is yellow when the menu opens
+        const btn = document.getElementById(`speed-${state.speed.toFixed(1)}`);
+        if(btn) btn.classList.add('active-yellow');
     }
 
     function cleanup() { if(currentBlock) currentBlock.element.remove(); currentBlock = null; cancelAnimationFrame(animationId); }
-    function closeMenus() { document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden')); state.isPaused = false; if(!currentBlock && state.roundHits < 15) spawnBlock(); else animate(); }
+    
+    function closeMenus() { 
+        document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden')); 
+        state.isPaused = false; 
+        if(!currentBlock && state.roundHits < 15) {
+            spawnBlock(); 
+        } else if (currentBlock) {
+            speak(currentBlock.data.word); // Repeats the word on resume
+            animate(); 
+        }
+    }
     function renderBook() { 
         const b = document.getElementById('book-display'); b.innerHTML = "";
         state.inventory.forEach(i => { const d = document.createElement('div'); d.style="font-size:35px; background:#222; padding:10px; border-radius:10px;"; d.innerText=i.emoji; b.appendChild(d); });
