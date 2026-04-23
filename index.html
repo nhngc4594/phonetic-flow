@@ -201,6 +201,27 @@
             font-size: 14px !important;
             padding: 8px 0 !important;
         }
+.map-node.selected {
+            border: 5px solid #f1c40f !important;
+            box-shadow: 0 0 20px #f1c40f;
+            transform: scale(1.1);
+        }
+        .sigil-indicator {
+            font-size: 24px;
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            background: rgba(0,0,0,0.8);
+            border-radius: 50%;
+            padding: 5px;
+        }
+.tower-item {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .tower-item:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
 <body>
@@ -384,7 +405,7 @@ function buyItem(emoji, price, idx) {
 
         if (inv >= 500 && !hasSigil(state.curLevel)) {
             // Simple English for the Sigil Trade
-            typeWriter("YOU ARE READY. TRADE A RARE STICKER FOR THE MAGIC SIGIL?");
+            typeWriter("YOU ARE READY. TRADE A RARE STICKER FOR THE MAGIC ITEM?");
             grid.classList.add('hidden'); trade.classList.remove('hidden');
             const opts = document.getElementById('trade-options'); opts.innerHTML = "";
             const unique = [...new Set(state.inventory.filter(i => i.level === state.curLevel).map(i => i.emoji))];
@@ -426,15 +447,49 @@ function buyItem(emoji, price, idx) {
     }
 
     function renderTower() {
-        const list = document.getElementById('tower-list'); list.innerHTML = "";
+        const list = document.getElementById('tower-list'); 
+        list.innerHTML = "";
+        
+        // Loop through levels 1 to 3
         for(let i=1; i<=3; i++) {
             const div = document.createElement('div');
-            div.className = "tower-item";
             const isLocked = i > state.maxLevel;
-            div.style.borderColor = (state.curLevel === i) ? 'var(--accent)' : '#444';
+            const isCurrent = i === state.curLevel;
+            
+            // Add classes for styling (tower-item is already in your CSS)
+            div.className = "tower-item";
+            
+            // Apply the yellow border if it's the selected level
+            if (isCurrent) {
+                div.style.borderColor = "var(--accent)";
+                div.style.boxShadow = "0 0 15px var(--accent)";
+            } else {
+                div.style.borderColor = "#444";
+                div.style.boxShadow = "none";
+            }
+            
             div.style.opacity = isLocked ? "0.4" : "1";
-            div.innerHTML = `Floor ${i}: ${levels[i].name} ${isLocked ? '🔒' : '✅'}`;
-            if(!isLocked) div.onclick = () => { state.curLevel = i; showMenu('main-menu'); };
+            div.style.position = "relative"; // Needed to position the sticker
+
+            // 1. Remove the ✅ and show the Sigil Sticker if owned
+            let statusIcon = isLocked ? '🔒' : '';
+            if (hasSigil(i)) {
+                statusIcon = `<span style="font-size:24px; position:absolute; right:10px;">${levels[i].sigil}</span>`;
+            }
+
+            div.innerHTML = `Floor ${i}: ${levels[i].name} ${statusIcon}`;
+
+            if(!isLocked) {
+                div.onclick = () => { 
+                    state.curLevel = i; 
+                    updateUI();
+                    renderTower(); // Refresh the list to move the yellow glow
+                    
+                    // 2. Add Confirmation Dialogue
+                    // Since there's no Wizard on this screen, we'll use a simple alert or just visual glow
+                    console.log("Level " + i + " Selected");
+                };
+            }
             list.appendChild(div);
         }
     }
@@ -535,6 +590,12 @@ function buyItem(emoji, price, idx) {
     
    loadGame(); // Loads your coins when the app starts
     updateUI();
+    // This makes sure our new map logic runs whenever the map menu is opened
+    const originalShowMenu = showMenu;
+    showMenu = function(menuId) {
+        if (menuId === 'world-map') renderWorldMap();
+        originalShowMenu(menuId);
+    };
 </script>
 </body>
 </html>
