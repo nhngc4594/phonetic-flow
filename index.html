@@ -176,10 +176,28 @@
     <button onclick="showMenu('main-menu')" style="background: #2980b9; width: 100%; margin-top: 15px;">BACK</button>
 </div>
 
-<div id="sticker-book" class="overlay hidden">
-    <h2 style="margin-top: 40px; color: var(--accent);">COLLECTION</h2>
-    <div id="book-display"></div>
-    <button onclick="showMenu('main-menu')" style="background: #444; margin-top: auto; width: 200px;">BACK</button>
+<div id="sticker-book" class="overlay hidden" style="display: flex; flex-direction: column;">
+    <h2 style="margin-top: 40px; color: var(--accent); flex-shrink: 0;">COLLECTION</h2>
+    
+    <div id="book-display" style="
+        flex-grow: 1; 
+        overflow-y: auto; 
+        width: 100%; 
+        padding: 20px; 
+        box-sizing: border-box;
+        display: grid; 
+        grid-template-columns: repeat(3, 1fr); 
+        gap: 20px; 
+        justify-items: center;
+        align-content: start;
+    "></div>
+    
+    <button onclick="showMenu('main-menu')" style="
+        background: #444; 
+        width: 200px; 
+        margin: 20px 0; 
+        flex-shrink: 0;
+    ">BACK</button>
 </div>
 
 <div id="pause-menu" class="overlay hidden">
