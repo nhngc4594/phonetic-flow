@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
-    <title>Phonetic Flow v2.8.5</title>
+    <title>Phonetic Flow v2.9.0</title>
     <style>
         :root {
             --bg-color: #0f0f0f;
@@ -13,7 +13,6 @@
             --ui-bg: rgba(30, 39, 46, 0.4);
             --accent: #f1c40f;
             --text-color: #ffffff;
-            /* New cleaner font for UI */
             --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             --font-retro: 'Courier New', Courier, monospace;
         }
@@ -26,7 +25,6 @@
             touch-action: none;
         }
 
-        /* Persistent UI Layer */
         #currency-display { 
             position: fixed; top: 20px; right: 20px; 
             font-size: 24px; color: var(--accent); 
@@ -93,7 +91,7 @@
             width: 100%; min-height: 120px; margin-bottom: 15px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             padding: 10px; box-sizing: border-box; 
-            font-family: var(--font-retro); /* Keep wizard retro */
+            font-family: var(--font-retro);
         }
 
         .item-card {
@@ -119,6 +117,61 @@
         button:active { transform: scale(0.95); }
         button:disabled { background: #444; color: #888; transform: none; }
         .active-yellow { background: var(--accent) !important; color: #000 !important; }
+
+        /* Voice selector panel */
+        #voice-panel {
+            width: 100%; max-width: 320px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 14px 16px;
+            box-sizing: border-box;
+            margin: 10px 0 4px;
+        }
+        #voice-panel label {
+            display: block;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+        }
+        #voice-panel .voice-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        #voice-select {
+            flex: 1;
+            background: rgba(0,0,0,0.4);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-family: var(--font-main);
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        #voice-select option { background: #1e272e; color: #fff; }
+        #btn-test-voice {
+            background: rgba(241,196,15,0.15);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 13px;
+            margin: 0;
+            white-space: nowrap;
+        }
+        #btn-test-voice:active { transform: scale(0.95); }
+        #voice-status {
+            font-size: 11px;
+            color: rgba(255,255,255,0.35);
+            margin-top: 7px;
+            min-height: 14px;
+        }
 
         .tower-item {
             background: #222; width: 85%; margin: 6px; padding: 15px;
@@ -150,9 +203,22 @@
 </div>
 
 <div id="main-menu" class="overlay">
-    <h1 style="color: var(--accent); font-size: 42px; margin-bottom: 10px;">PHONETIC FLOW</h1>
-    <p id="level-display-name" style="color: #aaa; margin-bottom: 25px; font-weight: bold;"></p>
-    <button onclick="startGame()" style="background: var(--l-color); width: 220px; font-size: 20px;">START</button>
+    <h1 style="color: var(--accent); font-size: 42px; margin-bottom: 4px;">PHONETIC FLOW</h1>
+    <p id="level-display-name" style="color: #aaa; margin-bottom: 16px; font-weight: bold;"></p>
+
+    <!-- Voice selector panel -->
+    <div id="voice-panel">
+        <label>🔊 Voice</label>
+        <div class="voice-row">
+            <select id="voice-select" onchange="onVoiceChange()">
+                <option value="">Loading voices…</option>
+            </select>
+            <button id="btn-test-voice" onclick="testVoice()">Test</button>
+        </div>
+        <div id="voice-status"></div>
+    </div>
+
+    <button onclick="startGame()" style="background: var(--l-color); width: 220px; font-size: 20px; margin-top: 14px;">START</button>
     <button id="btn-world-map" onclick="showMenu('level-select')" style="width: 220px;" class="hidden">WORLD MAP</button>
     <button onclick="showMenu('shop-menu')" style="width: 220px;">STICKER SHOP</button>
     <button onclick="showMenu('sticker-book')" style="width: 220px;">MY BOOK</button>
@@ -178,43 +244,26 @@
 
 <div id="sticker-book" class="overlay hidden" style="display: flex; flex-direction: column;">
     <h2 style="margin-top: 40px; color: var(--accent); flex-shrink: 0;">COLLECTION</h2>
-    
     <div id="book-display" style="
-        flex-grow: 1; 
-        overflow-y: auto; 
-        width: 100%; 
-        padding: 20px; 
-        box-sizing: border-box;
-        display: grid; 
-        grid-template-columns: repeat(3, 1fr); 
-        gap: 20px; 
-        justify-items: center;
-        align-content: start;
+        flex-grow: 1; overflow-y: auto; width: 100%; padding: 20px; box-sizing: border-box;
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; 
+        justify-items: center; align-content: start;
     "></div>
-    
-    <button onclick="showMenu('main-menu')" style="
-        background: #444; 
-        width: 200px; 
-        margin: 20px 0; 
-        flex-shrink: 0;
-    ">BACK</button>
+    <button onclick="showMenu('main-menu')" style="background: #444; width: 200px; margin: 20px 0; flex-shrink: 0;">BACK</button>
 </div>
 
 <div id="pause-menu" class="overlay hidden">
     <div style="background: rgba(30, 39, 46, 0.95); padding: 30px; border-radius: 24px; border: 2px solid var(--accent); width: 85%;">
         <h2 style="color: var(--accent);">PAUSED</h2>
-        
         <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin-bottom: 20px;">
             <p style="margin: 0 0 10px 0; font-weight: bold;">NEED A LIFE?</p>
             <button onclick="buyHeart()" style="background: #e74c3c; width: 150px;">❤️ BUY (💰75)</button>
         </div>
-
         <div style="display: flex; justify-content: space-around; margin-bottom: 25px;">
             <button id="speed-0.7" onclick="setSpeed(0.7)" style="font-size: 25px; background: #444;">🐢</button>
             <button id="speed-1.0" onclick="setSpeed(1.0)" style="font-size: 25px; background: #444;">🧑</button>
             <button id="speed-1.3" onclick="setSpeed(1.3)" style="font-size: 25px; background: #444;">⚡</button>
         </div>
-
         <button onclick="closeMenus()" style="background: var(--l-color); width: 100%; margin-bottom: 10px;">RESUME</button>
         <button onclick="location.reload()" style="background: #444; width: 100%;">EXIT</button>
     </div>
@@ -257,20 +306,120 @@
     let state = {
         curLevel: 1, maxLevel: 1, speed: 1.0, lives: 3, 
         coins: {1:0, 2:0, 3:0}, invest: {1:0, 2:0, 3:0}, 
-        inventory: [], roundHits: 0, isPaused: true
+        inventory: [], roundHits: 0, isPaused: true,
+        savedVoiceName: ""
     };
 
     let currentBlock = null;
     let animationId = null;
     let typeInterval = null;
+    let selectedVoice = null;
     const synth = window.speechSynthesis;
+
+    // --- PREFERRED VOICES (ordered by quality preference) ---
+    const preferredVoiceNames = [
+        "Google UK English Female",
+        "Google US English",
+        "Microsoft Zira - English (United States)",
+        "Microsoft Zira",
+        "Samantha",
+        "Karen",
+        "Victoria",
+        "Moira",
+    ];
+
+    // --- VOICE MANAGEMENT ---
+    function populateVoiceList() {
+        const voices = synth.getVoices();
+        const select = document.getElementById('voice-select');
+        const status = document.getElementById('voice-status');
+
+        // Filter to English voices only
+        const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+
+        if (englishVoices.length === 0) {
+            status.textContent = "No voices loaded yet — try again in a moment.";
+            return;
+        }
+
+        select.innerHTML = "";
+
+        // Sort: preferred voices first, then alphabetically
+        englishVoices.sort((a, b) => {
+            const ai = preferredVoiceNames.indexOf(a.name);
+            const bi = preferredVoiceNames.indexOf(b.name);
+            if (ai !== -1 && bi !== -1) return ai - bi;
+            if (ai !== -1) return -1;
+            if (bi !== -1) return 1;
+            return a.name.localeCompare(b.name);
+        });
+
+        englishVoices.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.name;
+            // Show a star next to preferred voices
+            const isPreferred = preferredVoiceNames.includes(v.name);
+            opt.textContent = (isPreferred ? "★ " : "") + v.name;
+            select.appendChild(opt);
+        });
+
+        // Restore saved voice, or auto-pick best available
+        const savedName = state.savedVoiceName;
+        if (savedName && englishVoices.find(v => v.name === savedName)) {
+            select.value = savedName;
+        } else {
+            const best = preferredVoiceNames.reduce(
+                (found, name) => found || englishVoices.find(v => v.name === name), null
+            );
+            if (best) select.value = best.name;
+        }
+
+        applySelectedVoice();
+        status.textContent = `${englishVoices.length} English voice${englishVoices.length !== 1 ? 's' : ''} available`;
+    }
+
+    function applySelectedVoice() {
+        const voices = synth.getVoices();
+        const name = document.getElementById('voice-select').value;
+        selectedVoice = voices.find(v => v.name === name) || null;
+        state.savedVoiceName = name;
+        saveGame();
+    }
+
+    function onVoiceChange() {
+        applySelectedVoice();
+    }
+
+    function testVoice() {
+        const btn = document.getElementById('btn-test-voice');
+        const status = document.getElementById('voice-status');
+        const voices = synth.getVoices();
+
+        // If voices aren't loaded yet, try to reload the list
+        if (voices.length === 0) {
+            status.textContent = "Still loading — please wait a moment.";
+            return;
+        }
+
+        // Repopulate in case voices loaded after page start
+        populateVoiceList();
+
+        btn.textContent = "…";
+        btn.disabled = true;
+
+        speak("Light. Right. Glass. Grass.", () => {
+            btn.textContent = "Test";
+            btn.disabled = false;
+        });
+    }
 
     // --- CORE ENGINE ---
     function speak(text, callback) {
         synth.cancel();
         const utter = new SpeechSynthesisUtterance(text);
         utter.rate = 0.8;
-        utter.onend = () => { if(callback) callback(); };
+        if (selectedVoice) utter.voice = selectedVoice;
+        utter.onend = () => { if (callback) callback(); };
         synth.speak(utter);
     }
 
@@ -299,6 +448,7 @@
         if(id === 'shop-menu') renderShop();
         if(id === 'level-select') renderTower();
         if(id === 'sticker-book') renderBook();
+        if(id === 'main-menu') populateVoiceList();
         updateUI();
     }
 
@@ -363,7 +513,6 @@
         } else {
             typeWriter("WELCOME! FLOOR " + state.curLevel + " SHOP. BUY STICKERS!");
             
-            // Heart Purchase Option
             const heartCard = document.createElement('div');
             heartCard.className = "item-card";
             heartCard.innerHTML = `<div>❤️</div><button onclick="buyHeart()">💰75</button>`;
@@ -408,30 +557,21 @@
 
     function spawnBlock() {
         if (state.isPaused || state.lives <= 0 || state.roundHits >= 15) return;
-        
         const pool = levels[state.curLevel].pairs;
         const pair = pool[Math.floor(Math.random() * pool.length)];
-        
-        // 1. Start speaking (but don't make the block wait!)
         speak(pair.word);
-
-        // 2. Spawn the block immediately
-        if(currentBlock) return; // Safety check
+        if(currentBlock) return;
         const el = document.createElement('div');
         el.className = 'block'; 
         el.innerText = "?";
         el.style.left = "calc(50% - 60px)"; 
         el.style.top = "0px";
-        
         el.addEventListener('pointerdown', (e) => { 
             e.stopPropagation(); 
             showMenu('pause-menu'); 
         });
-        
         document.getElementById('game-container').appendChild(el);
         currentBlock = { element: el, data: pair, top: 0 };
-        
-        // 3. Start falling immediately
         animate();
     }
 
@@ -500,6 +640,12 @@
             b.appendChild(d);
         });
     }
+
+    // --- INIT ---
+    // Voices load asynchronously in most browsers
+    synth.onvoiceschanged = populateVoiceList;
+    // Also try immediately (works in Firefox and some others)
+    populateVoiceList();
 
     loadGame();
 </script>
