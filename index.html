@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
-    <title>Phonetic Flow v2.8.5</title>
+    <title>Phonetic Flow v2.8.8</title>
     <style>
         :root {
             --bg-color: #0f0f0f;
@@ -13,7 +13,6 @@
             --ui-bg: rgba(30, 39, 46, 0.4);
             --accent: #f1c40f;
             --text-color: #ffffff;
-            /* New cleaner font for UI */
             --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             --font-retro: 'Courier New', Courier, monospace;
         }
@@ -26,17 +25,16 @@
             touch-action: none;
         }
 
-        /* Persistent UI Layer */
         #currency-display { 
             position: fixed; top: 20px; right: 20px; 
             font-size: 24px; color: var(--accent); 
             z-index: 500; font-weight: 900;
-            background: rgba(0,0,0,0.7); padding: 8px 15px;
+            background: rgba(0,0,0,0.8); padding: 8px 15px;
             border-radius: 20px; border: 2px solid var(--accent);
         }
         #lives-display { 
             position: fixed; top: 20px; left: 50%; 
-            transform: translateX(-50%); font-size: 26px; 
+            transform: translateX(-50%); font-size: 30px; 
             z-index: 500; 
         }
 
@@ -50,35 +48,50 @@
         #r-bg { background-color: var(--r-color); }
 
         .lane-label {
-            position: absolute; bottom: 100px; font-size: 120px; font-weight: 900;
-            color: var(--accent); opacity: 0.2; z-index: 2; pointer-events: none;
+            position: absolute; top: 15%; font-size: 150px; 
+            font-weight: 900; color: var(--accent); 
+            opacity: 0.2; z-index: 1; pointer-events: none;
         }
         #l-label { left: 10%; }
         #r-label { right: 10%; }
 
         .side-stack {
-            position: absolute; bottom: 80px; width: 160px; height: auto;
-            display: flex; flex-direction: column-reverse; z-index: 10;
-            padding: 10px; box-sizing: border-box; pointer-events: none;
+            position: absolute; bottom: 0; width: 40%; height: 100%;
+            display: flex; flex-direction: column-reverse; pointer-events: none;
+            z-index: 5;
         }
-        #left-stack { left: 0; align-items: flex-start; }
-        #right-stack { right: 0; align-items: flex-end; }
-        
+        #left-stack { left: 0; align-items: flex-start; padding-left: 10px; }
+        #right-stack { right: 0; align-items: flex-end; padding-right: 10px; }
+
+        /* VIZ-COMFORT BRICKS */
         .brick {
-            width: 130px; height: 35px; margin-bottom: 4px;
-            border-radius: 6px; display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: bold; color: white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.4);
-            animation: slideIn 0.2s ease-out; flex-shrink: 0;
+            width: 160px !important; 
+            height: 60px !important; 
+            margin: 5px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 15px; 
+            font-size: 28px !important; 
+            font-weight: 900;
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+            text-shadow: 2px 2px 4px rgba(0,0,0,1);
+            animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Falling Block */
         .block {
             position: absolute; 
-            width: 120px; height: 120px;
-            background-color: #34495e; border: 4px solid var(--accent);
-            border-radius: 24px; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 40px; z-index: 20;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.8); cursor: pointer;
+            width: 150px; height: 150px;
+            background-color: #2c3e50; border: 8px solid var(--accent);
+            border-radius: 35px; display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 80px; z-index: 20;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9); cursor: pointer;
         }
 
         .overlay {
@@ -88,51 +101,20 @@
             z-index: 300; text-align: center; padding: 20px; box-sizing: border-box;
         }
 
-        #shopkeeper-area {
-            background: #000; border: 3px solid #fff; border-radius: 10px;
-            width: 100%; min-height: 120px; margin-bottom: 15px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 10px; box-sizing: border-box; 
-            font-family: var(--font-retro); /* Keep wizard retro */
-        }
-
-        .item-card {
-            background: transparent;
-            display: flex; flex-direction: column; align-items: center;
-            padding: 10px;
-        }
-
-        .item-card div { font-size: 55px; margin-bottom: 5px; }
-
-        .book-sticker {
-            font-size: 70px;
-            filter: drop-shadow(0 0 12px rgba(241, 196, 15, 0.7));
-            transition: transform 0.3s;
-        }
-
         button {
-            padding: 12px 20px; font-size: 16px; border-radius: 40px;
+            padding: 20px 30px; font-size: 22px; border-radius: 50px;
             border: none; background: #3498db; color: white; cursor: pointer;
-            font-weight: bold; font-family: var(--font-main); margin: 6px;
-            transition: transform 0.1s;
-        }
-        button:active { transform: scale(0.95); }
-        button:disabled { background: #444; color: #888; transform: none; }
-        .active-yellow { background: var(--accent) !important; color: #000 !important; }
-
-        .tower-item {
-            background: #222; width: 85%; margin: 6px; padding: 15px;
-            border-radius: 12px; border: 2px solid #444; transition: 0.3s;
+            font-weight: 900; font-family: var(--font-main); margin: 10px;
         }
 
         .hidden { display: none !important; }
 
-        @keyframes goldSparkle {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.3); filter: brightness(1.5) drop-shadow(0 0 20px #f1c40f); }
-            100% { transform: scale(1); filter: brightness(1); }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-15px); }
+            75% { transform: translateX(15px); }
         }
-        .purchased-anim { animation: goldSparkle 0.6s ease; }
+        .shake-ui { animation: shake 0.3s; }
     </style>
 </head>
 <body>
@@ -150,104 +132,76 @@
 </div>
 
 <div id="main-menu" class="overlay">
-    <h1 style="color: var(--accent); font-size: 42px; margin-bottom: 10px;">PHONETIC FLOW</h1>
-    <p id="level-display-name" style="color: #aaa; margin-bottom: 25px; font-weight: bold;"></p>
-    <button onclick="startGame()" style="background: var(--l-color); width: 220px; font-size: 20px;">START</button>
-    <button id="btn-world-map" onclick="showMenu('level-select')" style="width: 220px;" class="hidden">WORLD MAP</button>
-    <button onclick="showMenu('shop-menu')" style="width: 220px;">STICKER SHOP</button>
-    <button onclick="showMenu('sticker-book')" style="width: 220px;">MY BOOK</button>
+    <h1 style="color: var(--accent); font-size: 56px; margin-bottom: 20px; text-shadow: 3px 3px #000;">PHONETIC FLOW</h1>
+    <p id="level-display-name" style="color: #ccc; margin-bottom: 30px; font-weight: bold; font-size: 24px;"></p>
+    <button onclick="startGame()" style="background: var(--l-color); width: 300px; font-size: 28px;">START</button>
+    <button id="btn-world-map" onclick="showMenu('level-select')" style="width: 300px;" class="hidden">WORLD MAP</button>
+    <button onclick="showMenu('shop-menu')" style="width: 300px;">SHOP</button>
+    <button onclick="showMenu('sticker-book')" style="width: 300px;">COLLECTION</button>
 </div>
 
 <div id="level-select" class="overlay hidden">
-    <h2 style="color: var(--accent)">ASCENDING TOWER</h2>
+    <h2 style="color: var(--accent); font-size: 40px;">FLOOR SELECT</h2>
     <div id="tower-list" style="display: flex; flex-direction: column-reverse; width: 100%; align-items: center;"></div>
-    <button onclick="showMenu('main-menu')" style="background: #444; width: 200px; margin-top: 20px;">BACK</button>
+    <button onclick="showMenu('main-menu')" style="background: #444; width: 250px;">BACK</button>
 </div>
 
 <div id="shop-menu" class="overlay hidden">
-    <div id="shopkeeper-area">
-        <div style="font-size: 50px;">🧙‍♂️</div>
-        <div id="shopkeeper-text" style="font-weight: bold; text-transform: uppercase;"></div>
+    <div id="shopkeeper-area" style="background: #000; border: 4px solid #fff; padding: 20px; width: 90%; margin-bottom: 20px;">
+        <div id="shopkeeper-text" style="font-weight: bold; font-size: 24px; font-family: var(--font-retro);"></div>
     </div>
-    <div id="shop-items-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; overflow-y: auto;"></div>
-    <div id="trade-ui" class="hidden">
-        <div id="trade-options" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
-    </div>
-    <button onclick="showMenu('main-menu')" style="background: #2980b9; width: 100%; margin-top: 15px;">BACK</button>
+    <div id="shop-items-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%; max-height: 50vh; overflow-y: auto;"></div>
+    <div id="trade-ui" class="hidden"><div id="trade-options" style="display:flex; flex-wrap:wrap; justify-content:center;"></div></div>
+    <button onclick="showMenu('main-menu')" style="background: #2980b9; width: 100%;">BACK</button>
 </div>
 
-<div id="sticker-book" class="overlay hidden" style="display: flex; flex-direction: column;">
-    <h2 style="margin-top: 40px; color: var(--accent); flex-shrink: 0;">COLLECTION</h2>
-    
-    <div id="book-display" style="
-        flex-grow: 1; 
-        overflow-y: auto; 
-        width: 100%; 
-        padding: 20px; 
-        box-sizing: border-box;
-        display: grid; 
-        grid-template-columns: repeat(3, 1fr); 
-        gap: 20px; 
-        justify-items: center;
-        align-content: start;
-    "></div>
-    
-    <button onclick="showMenu('main-menu')" style="
-        background: #444; 
-        width: 200px; 
-        margin: 20px 0; 
-        flex-shrink: 0;
-    ">BACK</button>
+<div id="sticker-book" class="overlay hidden">
+    <h2 style="color: var(--accent); font-size: 40px;">STICKERS</h2>
+    <div id="book-display" style="flex-grow: 1; overflow-y: auto; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; padding: 20px;"></div>
+    <button onclick="showMenu('main-menu')" style="background: #444; width: 250px;">BACK</button>
 </div>
+
 <div id="pause-menu" class="overlay hidden">
-    <div style="background: rgba(30, 39, 46, 0.95); padding: 30px; border-radius: 24px; border: 2px solid var(--accent); width: 85%;">
-        <h2 style="color: var(--accent);">PAUSED</h2>
-        
-        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin-bottom: 20px;">
-            <p style="margin: 0 0 10px 0; font-weight: bold;">NEED A LIFE?</p>
-            <button onclick="buyHeart()" style="background: #e74c3c; width: 150px;">❤️ BUY (💰75)</button>
+    <div style="background: rgba(30, 39, 46, 0.98); padding: 40px; border-radius: 30px; border: 6px solid var(--accent); width: 90%;">
+        <h2 style="color: var(--accent); font-size: 48px;">PAUSED</h2>
+        <button onclick="buyHeart()" style="background: #e74c3c; width: 220px; font-size: 24px;">❤️ BUY LIFE (75)</button>
+        <div style="display: flex; justify-content: space-around; margin: 30px 0;">
+            <button onclick="setSpeed(0.7)" style="font-size: 45px;">🐢</button>
+            <button onclick="setSpeed(1.0)" style="font-size: 45px;">🧑</button>
+            <button onclick="setSpeed(1.3)" style="font-size: 45px;">⚡</button>
         </div>
-
-        <div style="display: flex; justify-content: space-around; margin-bottom: 25px;">
-            <button id="speed-0.7" onclick="setSpeed(0.7)" style="font-size: 25px; background: #444;">🐢</button>
-            <button id="speed-1.0" onclick="setSpeed(1.0)" style="font-size: 25px; background: #444;">🧑</button>
-            <button id="speed-1.3" onclick="setSpeed(1.3)" style="font-size: 25px; background: #444;">⚡</button>
-        </div>
-
-        <button onclick="closeMenus()" style="background: var(--l-color); width: 100%; margin-bottom: 10px;">RESUME</button>
-        <button onclick="location.reload()" style="background: #444; width: 100%;">EXIT</button>
+        <button onclick="closeMenus()" style="background: var(--l-color); width: 100%; font-size: 26px;">RESUME</button>
     </div>
 </div>
 
 <div id="round-win" class="overlay hidden">
-    <h1 style="color: var(--l-color);">CLEAR!</h1>
-    <p>Floor Bonus: 💰 +50</p>
-    <button onclick="showMenu('main-menu')">CONTINUE</button>
+    <h1 style="color: var(--l-color); font-size: 60px;">CLEAR!</h1>
+    <button onclick="showMenu('main-menu')" style="font-size: 30px;">CONTINUE</button>
 </div>
 
 <div id="game-over" class="overlay hidden">
-    <h1 style="color: var(--r-color);">GAME OVER</h1>
-    <button onclick="startGame()">RETRY</button>
-    <button onclick="showMenu('main-menu')" style="background: #444;">EXIT</button>
+    <h1 style="color: var(--r-color); font-size: 60px;">GAME OVER</h1>
+    <button onclick="startGame()" style="font-size: 30px;">RETRY</button>
 </div>
 
 <script>
     const levels = {
-        1: { name: "L vs R Forest", sigil: "🌲", pairs: [
+        1: { name: "L vs R Forest", labels: ["L", "R"], sigil: "🌲", pairs: [
             {word:"Light",type:"L"},{word:"Right",type:"R"},{word:"Glass",type:"L"},{word:"Grass",type:"R"},
             {word:"Collect",type:"L"},{word:"Correct",type:"R"},{word:"Tall",type:"L"},{word:"Door",type:"R"},
             {word:"Play",type:"L"},{word:"Pray",type:"R"}
         ], stickers: [
             {emoji:"☁️", price:50}, {emoji:"🌱", price:100}, {emoji:"🌲", price:200}, {emoji:"🦅", price:300}, {emoji:"💎", price:500}
         ]},
-        2: { name: "V vs B Valley", sigil: "🌊", pairs: [
+        2: { name: "V vs B Valley", labels: ["V", "B"], sigil: "🌊", pairs: [
             {word:"Vest",type:"L"},{word:"Best",type:"R"},{word:"Vote",type:"L"},{word:"Boat",type:"R"},
             {word:"Van",type:"L"},{word:"Ban",type:"R"},{word:"Vase",type:"L"},{word:"Base",type:"R"}
         ], stickers: [
             {emoji:"💧", price:50}, {emoji:"🐚", price:100}, {emoji:"🦀", price:200}, {emoji:"🦈", price:300}, {emoji:"🔱", price:500}
         ]},
-        3: { name: "Eat vs It Peak", sigil: "🏔️", pairs: [
-            {word:"Eat",type:"L"},{word:"It",type:"R"},{word:"Seat",type:"L"},{word:"Sit",type:"R"}
+        3: { name: "S vs TH Peak", labels: ["S", "TH"], sigil: "🏔️", pairs: [
+            {word:"Sink",type:"L"},{word:"Think",type:"R"},{word:"Sank",type:"L"},{word:"Thank",type:"R"},
+            {word:"Pass",type:"L"},{word:"Path",type:"R"}
         ], stickers: [
             {emoji:"❄️", price:50}, {emoji:"🧤", price:100}, {emoji:"⛺", price:200}, {emoji:"🎿", price:300}, {emoji:"🗻", price:500}
         ]}
@@ -261,38 +215,25 @@
 
     let currentBlock = null;
     let animationId = null;
-    let typeInterval = null;
     const synth = window.speechSynthesis;
 
-    // --- CORE ENGINE ---
-    function speak(text, callback) {
+    function speak(text) {
         synth.cancel();
         const utter = new SpeechSynthesisUtterance(text);
-        utter.rate = 0.8;
-        utter.onend = () => { if(callback) callback(); };
+        utter.rate = 0.7;
         synth.speak(utter);
     }
 
-    function saveGame() { localStorage.setItem('phoneticFlowSave', JSON.stringify(state)); }
+    function saveGame() { localStorage.setItem('phoneticFlowSave_v2.8.8', JSON.stringify(state)); }
     function loadGame() {
-        const saved = localStorage.getItem('phoneticFlowSave');
-        if (saved) { state = { ...state, ...JSON.parse(saved) }; }
+        const saved = localStorage.getItem('phoneticFlowSave_v2.8.8');
+        if (saved) state = { ...state, ...JSON.parse(saved) };
         updateUI();
-    }
-
-    function typeWriter(text) {
-        clearInterval(typeInterval);
-        const el = document.getElementById('shopkeeper-text');
-        el.innerHTML = ""; let i = 0;
-        typeInterval = setInterval(() => {
-            el.innerHTML += text.charAt(i); i++;
-            if (i >= text.length) clearInterval(typeInterval);
-        }, 40);
     }
 
     function showMenu(id) {
         state.isPaused = true;
-        cancelAnimationFrame(animationId);
+        cleanup();
         document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
         if(id === 'shop-menu') renderShop();
@@ -306,98 +247,42 @@
         document.getElementById('lives-display').innerText = "❤️".repeat(Math.max(0, state.lives));
         document.getElementById('level-display-name').innerText = levels[state.curLevel].name;
         if(state.maxLevel >= 2) document.getElementById('btn-world-map').classList.remove('hidden');
-        
-        document.querySelectorAll('#pause-menu button').forEach(b => b.classList.remove('active-yellow'));
-        const btn = document.getElementById(`speed-${state.speed.toFixed(1)}`);
-        if(btn) btn.classList.add('active-yellow');
+        document.getElementById('l-label').innerText = levels[state.curLevel].labels[0];
+        document.getElementById('r-label').innerText = levels[state.curLevel].labels[1];
         saveGame();
     }
 
-    // --- SHOP LOGIC ---
     function buyHeart() {
-        const cost = 75;
-        if (state.coins[state.curLevel] >= cost) {
-            state.coins[state.curLevel] -= cost;
+        if (state.coins[state.curLevel] >= 75) {
+            state.coins[state.curLevel] -= 75;
             state.lives++;
             updateUI();
-            if(!document.getElementById('shop-menu').classList.contains('hidden')) {
-                typeWriter("A FRESH HEART! STAY STRONG.");
-            }
-        } else {
-            if(!document.getElementById('shop-menu').classList.contains('hidden')) {
-                typeWriter("NOT ENOUGH COINS FOR A HEART!");
-            }
-        }
-    }
-
-    function buyItem(emoji, price, idx) {
-        if (state.coins[state.curLevel] >= price) {
-            const card = document.getElementById(`shop-item-${idx}`);
-            if(card) card.classList.add('purchased-anim');
-            state.coins[state.curLevel] -= price;
-            state.invest[state.curLevel] += price;
-            state.inventory.push({emoji, level: state.curLevel});
-            setTimeout(() => { renderShop(); updateUI(); }, 600);
-        } else {
-            typeWriter("NOT ENOUGH COINS! PLAY MORE!");
         }
     }
 
     function renderShop() {
-        const inv = state.invest[state.curLevel];
         const grid = document.getElementById('shop-items-grid');
-        const trade = document.getElementById('trade-ui');
-        grid.innerHTML = ""; grid.classList.remove('hidden'); trade.classList.add('hidden');
+        grid.innerHTML = "";
+        document.getElementById('shopkeeper-text').innerText = "BIG WORDS FOR BIG REWARDS!";
+        levels[state.curLevel].stickers.forEach((item, idx) => {
+            const count = state.inventory.filter(i => i.emoji === item.emoji).length;
+            const card = document.createElement('div');
+            card.innerHTML = `<div style="font-size:60px;">${item.emoji}</div>
+                              <button onclick="buyItem('${item.emoji}', ${item.price})" ${count >= 2 ? 'disabled' : ''}>
+                              ${count >= 2 ? 'SOLD' : '💰'+item.price}</button>`;
+            grid.appendChild(card);
+        });
+    }
 
-        if (inv >= 500 && !hasSigil(state.curLevel)) {
-            typeWriter("YOU ARE READY. TRADE A RARE STICKER FOR THE MAGIC ITEM?");
-            grid.classList.add('hidden'); trade.classList.remove('hidden');
-            const opts = document.getElementById('trade-options'); opts.innerHTML = "";
-            const unique = [...new Set(state.inventory.filter(i => i.level === state.curLevel).map(i => i.emoji))];
-            unique.forEach(emo => {
-                const b = document.createElement('button'); b.innerText = emo;
-                b.style.fontSize = "30px";
-                b.onclick = () => processTrade(emo); opts.appendChild(b);
-            });
-        } else {
-            typeWriter("WELCOME! FLOOR " + state.curLevel + " SHOP. BUY STICKERS!");
-            
-            // Heart Purchase Option
-            const heartCard = document.createElement('div');
-            heartCard.className = "item-card";
-            heartCard.innerHTML = `<div>❤️</div><button onclick="buyHeart()">💰75</button>`;
-            grid.appendChild(heartCard);
-
-            levels[state.curLevel].stickers.forEach((item, idx) => {
-                const count = state.inventory.filter(i => i.emoji === item.emoji).length;
-                const stockText = count === 0 ? "2X" : (count === 1 ? "1X" : "SOLD");
-                const card = document.createElement('div');
-                card.className = "item-card"; card.id = `shop-item-${idx}`;
-                card.innerHTML = `<div>${item.emoji}</div>
-                                  <button onclick="buyItem('${item.emoji}', ${item.price}, ${idx})" ${count >= 2 ? 'disabled' : ''}>
-                                  ${stockText}: 💰${item.price}</button>`;
-                grid.appendChild(card);
-            });
+    function buyItem(emoji, price) {
+        if (state.coins[state.curLevel] >= price) {
+            state.coins[state.curLevel] -= price;
+            state.invest[state.curLevel] += price;
+            state.inventory.push({emoji, level: state.curLevel});
+            renderShop(); updateUI();
         }
     }
 
-    function processTrade(emoji) {
-        const stickerRef = levels[state.curLevel].stickers.find(s => s.emoji === emoji);
-        if(!stickerRef || stickerRef.price <= 50) { 
-            typeWriter("NO. THAT IS TOO COMMON. GIVE ME A RARE STICKER."); 
-            return; 
-        }
-        const idx = state.inventory.findIndex(i => i.emoji === emoji);
-        state.inventory.splice(idx, 1);
-        state.inventory.push({emoji: levels[state.curLevel].sigil, level: state.curLevel, isSigil: true});
-        state.maxLevel = Math.max(state.maxLevel, state.curLevel + 1);
-        typeWriter("THANK YOU! THE NEXT FLOOR IS OPEN.");
-        setTimeout(() => showMenu('main-menu'), 2000);
-    }
-
-    function hasSigil(lvl) { return state.inventory.some(i => i.level === lvl && i.isSigil); }
-
-    // --- GAMEPLAY LOOP ---
     function startGame() {
         cleanup(); state.lives = 3; state.roundHits = 0;
         document.getElementById('left-stack').innerHTML = "";
@@ -407,30 +292,14 @@
 
     function spawnBlock() {
         if (state.isPaused || state.lives <= 0 || state.roundHits >= 15) return;
-        
-        const pool = levels[state.curLevel].pairs;
-        const pair = pool[Math.floor(Math.random() * pool.length)];
-        
-        // 1. Start speaking (but don't make the block wait!)
+        const pair = levels[state.curLevel].pairs[Math.floor(Math.random() * levels[state.curLevel].pairs.length)];
         speak(pair.word);
-
-        // 2. Spawn the block immediately
-        if(currentBlock) return; // Safety check
         const el = document.createElement('div');
-        el.className = 'block'; 
-        el.innerText = "?";
-        el.style.left = "calc(50% - 60px)"; 
-        el.style.top = "0px";
-        
-        el.addEventListener('pointerdown', (e) => { 
-            e.stopPropagation(); 
-            showMenu('pause-menu'); 
-        });
-        
+        el.className = 'block'; el.innerText = "?";
+        el.style.left = "calc(50% - 75px)"; el.style.top = "0px";
+        el.addEventListener('pointerdown', (e) => { e.stopPropagation(); showMenu('pause-menu'); });
         document.getElementById('game-container').appendChild(el);
         currentBlock = { element: el, data: pair, top: 0 };
-        
-        // 3. Start falling immediately
         animate();
     }
 
@@ -438,7 +307,7 @@
         if (state.isPaused || !currentBlock) return;
         currentBlock.top += (2.2 * state.speed);
         currentBlock.element.style.top = currentBlock.top + "px";
-        if (currentBlock.top > window.innerHeight - 120) resolve(null);
+        if (currentBlock.top > window.innerHeight - 180) resolve(null);
         else animationId = requestAnimationFrame(animate);
     }
 
@@ -453,49 +322,41 @@
         const brick = document.createElement('div');
         brick.className = 'brick'; brick.innerText = currentBlock.data.word;
         brick.style.background = isCorrect ? 'var(--l-color)' : 'var(--r-color)';
-        const target = (choice === 'L' || (!choice && currentBlock.data.type === 'R')) ? 'left-stack' : 'right-stack';
+        
+        const target = choice === 'L' ? 'left-stack' : (choice === 'R' ? 'right-stack' : (currentBlock.data.type === 'L' ? 'right-stack' : 'left-stack'));
         document.getElementById(target).appendChild(brick);
-        if (isCorrect) { state.roundHits++; state.coins[state.curLevel] += 10; }
-        else { state.lives--; if(state.lives <= 0) return showMenu('game-over'); }
+
+        if (isCorrect) { 
+            state.roundHits++; state.coins[state.curLevel] += 10; 
+        } else { 
+            state.lives--; 
+            document.getElementById('lives-display').classList.add('shake-ui');
+            setTimeout(() => document.getElementById('lives-display').classList.remove('shake-ui'), 300);
+            if(state.lives <= 0) return showMenu('game-over'); 
+        }
         cleanup(); updateUI();
-        if(state.roundHits >= 15) { state.coins[state.curLevel] += 50; setTimeout(() => showMenu('round-win'), 500); }
+        if(state.roundHits >= 15) setTimeout(() => showMenu('round-win'), 500);
         else setTimeout(spawnBlock, 400);
     }
 
     function cleanup() { if(currentBlock) currentBlock.element.remove(); currentBlock = null; cancelAnimationFrame(animationId); }
-    function closeMenus() { 
-        document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden')); 
-        state.isPaused = false; 
-        if(!currentBlock && state.roundHits < 15) spawnBlock(); 
-        else if (currentBlock) { speak(currentBlock.data.word); animate(); }
-    }
-
+    function closeMenus() { document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden')); state.isPaused = false; spawnBlock(); }
     function setSpeed(s) { state.speed = s; updateUI(); }
-
     function renderTower() {
         const list = document.getElementById('tower-list'); list.innerHTML = "";
         for(let i=1; i<=3; i++) {
             const div = document.createElement('div');
-            const isLocked = i > state.maxLevel;
-            div.className = "tower-item";
-            if (i === state.curLevel) { div.style.borderColor = "var(--accent)"; div.style.boxShadow = "0 0 15px var(--accent)"; }
-            div.style.opacity = isLocked ? "0.4" : "1";
-            let status = isLocked ? '🔒' : (hasSigil(i) ? `<span style="float:right">${levels[i].sigil}</span>` : '');
-            div.innerHTML = `Floor ${i}: ${levels[i].name} ${status}`;
-            if(!isLocked) div.onclick = () => { state.curLevel = i; updateUI(); renderTower(); };
+            div.style.background = "#222"; div.style.width = "90%"; div.style.margin = "10px"; div.style.padding = "20px";
+            div.style.borderRadius = "15px"; div.style.fontSize = "24px";
+            div.innerHTML = `Floor ${i}: ${levels[i].name}`;
+            if(i <= state.maxLevel) div.onclick = () => { state.curLevel = i; showMenu('main-menu'); };
             list.appendChild(div);
         }
     }
-
     function renderBook() {
-        const b = document.getElementById('book-display');
-        b.innerHTML = "";
-        if(state.inventory.length === 0) { b.innerHTML = "<p>BOOK IS EMPTY</p>"; return; }
+        const b = document.getElementById('book-display'); b.innerHTML = "";
         state.inventory.forEach(i => {
-            const d = document.createElement('div');
-            d.className = "book-sticker";
-            d.innerText = i.emoji;
-            if (i.isSigil) d.style.filter = "drop-shadow(0 0 20px #f1c40f)";
+            const d = document.createElement('div'); d.style.fontSize = "70px"; d.innerText = i.emoji;
             b.appendChild(d);
         });
     }
