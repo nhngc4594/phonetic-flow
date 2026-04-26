@@ -214,8 +214,8 @@
 <div id="game-container">
     <div id="l-bg" class="bg-half"></div>
     <div id="r-bg" class="bg-half"></div>
-    <div id="l-label" class="lane-label">L</div>
-    <div id="r-label" class="lane-label">R</div>
+   <div id="l-label" class="lane-label"></div>
+<div id="r-label" class="lane-label"></div>
     <div id="left-stack" class="side-stack"></div>
     <div id="right-stack" class="side-stack"></div>
 </div>
@@ -756,14 +756,16 @@
     // =============================================
     // GAMEPLAY
     // =============================================
-    function startGame() {
-        cleanup();
-        state.lives = 3; state.roundHits = 0;
-        document.getElementById('left-stack').innerHTML = "";
-        document.getElementById('right-stack').innerHTML = "";
-        closeMenus();
-    }
-
+   function startGame() {
+    cleanup();
+    state.lives = 3; state.roundHits = 0;
+    document.getElementById('left-stack').innerHTML = "";
+    document.getElementById('right-stack').innerHTML = "";
+    const lvl = levels[state.curLevel];
+    document.getElementById('l-label').innerText = lvl.sounds[0];
+    document.getElementById('r-label').innerText = lvl.sounds[1];
+    closeMenus();
+}
     function spawnBlock() {
         if (state.isPaused || state.lives <= 0 || state.roundHits >= 15) return;
         const pool = levels[state.curLevel].words;
