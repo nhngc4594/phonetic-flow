@@ -243,8 +243,8 @@
 <!-- LEVEL SELECT -->
 <div id="level-select" class="overlay hidden">
     <h2 style="color: var(--accent)">ASCENDING TOWER</h2>
-    <div id="tower-list" style="display: flex; flex-direction: column-reverse; width: 100%; align-items: center;"></div>
-    <button onclick="showMenu('main-menu')" style="background: #444; width: 200px; margin-top: 20px;">BACK</button>
+    <div id="tower-list" style="display: flex; flex-direction: column-reverse; width: 100%; align-items: center; overflow-y: auto; max-height: 60vh;"></div>
+    <button onclick="showMenu('main-menu')" style="background: #444; width: 200px; margin-top: 20px; flex-shrink: 0;">BACK</button>
 </div>
 
 <!-- SHOP -->
