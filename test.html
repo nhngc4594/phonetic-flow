@@ -488,7 +488,10 @@
     function saveGame(){ localStorage.setItem('phoneticFlowSave',JSON.stringify(state)); }
     function loadGame(){
         const s=localStorage.getItem('phoneticFlowSave');
-        if(s) state={...state,...JSON.parse(s)};
+       if(s) state={...state,...JSON.parse(s)};
+state.curLevel = String(state.curLevel);
+for(const k in state.coins) state.coins[String(k)] = state.coins[k];
+for(const k in state.coins) if(k !== String(k)) delete state.coins[k];
         setGender(state.gender); updateUI();
         if(!state.seenHelp) showHelp();
     }
