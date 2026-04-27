@@ -482,9 +482,10 @@
     function dismissHelp() {
         document.getElementById('help-screen').classList.add('hidden');
         state.seenHelp=true; saveGame();
-        if(currentBlock){ state.isPaused=false; playAudio(currentBlock.data); animate(); }
-    }
-
+    state.isPaused=false;
+if(currentBlock){ playAudio(currentBlock.data); animate(); }
+else { spawnBlock();
+     }
     function saveGame(){ localStorage.setItem('phoneticFlowSave',JSON.stringify(state)); }
     function loadGame(){
         const s=localStorage.getItem('phoneticFlowSave');
