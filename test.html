@@ -608,7 +608,10 @@ for(const k in state.coins) if(k !== String(k)) delete state.coins[k];
         el.addEventListener('pointerdown',e=>{ e.stopPropagation(); showMenu('pause-menu'); });
         document.getElementById('game-container').appendChild(el);
         currentBlock={element:el,data:w,top:0};
-        playAudio(w); animate();
+       playAudio(w, () => {}); 
+const a = currentAudio;
+if(a) { a.oncanplaythrough = () => { a.oncanplaythrough=null; animate(); }; }
+else { animate(); }
     }
 
     function animate() {
