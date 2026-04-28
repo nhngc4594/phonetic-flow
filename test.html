@@ -676,7 +676,7 @@ else { animate(); }
             div.style.opacity=locked?"0.4":"1";
             const kb=hasKey(i)?`<span style="float:right;filter:sepia(1) saturate(5) hue-rotate(5deg) brightness(1.2);">🗝️</span>`:'';
             div.innerHTML=`Floor ${i}: ${levels[i].name} ${locked?'🔒':''}${kb}`;
-            if(!locked) div.onclick=()=>{ state.curLevel=i; updateUI(); renderTower(); };
+            if(!locked) div.onclick=()=>{ state.curLevel=i; preloadAudio(); updateUI(); renderTower(); };
             list.appendChild(div);
         }
     }
