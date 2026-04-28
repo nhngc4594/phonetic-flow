@@ -456,7 +456,15 @@
         const g = state.gender==='male'?'male':'female';
         return `audio/${levels[state.curLevel].folder}/${w.sound}_${w.position}_${w.word}_${g}.mp3`;
     }
-
+function preloadAudio() {
+    const g = state.gender==='male'?'male':'female';
+    const words = levels[state.curLevel].words;
+    words.forEach(w => {
+        const a = new Audio();
+        a.preload = 'auto';
+        a.src = `audio/${levels[state.curLevel].folder}/${w.sound}_${w.position}_${w.word}_${g}.mp3`;
+    });
+}
     function playAudio(w, cb) {
         if(currentAudio){ currentAudio.pause(); currentAudio.onended=null; currentAudio=null; }
         const a = new Audio(buildAudioPath(w));
@@ -593,7 +601,8 @@ for(const k in state.coins) if(k !== String(k)) delete state.coins[k];
         const lvl=levels[state.curLevel];
         document.getElementById('l-label').innerText=lvl.sounds[0];
         document.getElementById('r-label').innerText=lvl.sounds[1];
-        closeMenus();
+       preloadAudio();
+closeMenus();
     }
 
     function spawnBlock() {
