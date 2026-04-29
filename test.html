@@ -683,7 +683,14 @@
     function dismissHelp() {
         document.getElementById('help-screen').classList.add('hidden');
         state.seenHelp=true; saveGame();
-        if(currentBlock){ state.isPaused=false; playAudio(currentBlock.data); animate(); }
+        // If all overlays are already hidden (help was opened mid-game), resume properly
+        const anyOverlayVisible = [...document.querySelectorAll('.overlay')]
+            .some(el => !el.classList.contains('hidden'));
+        if(!anyOverlayVisible) {
+            state.isPaused=false;
+            if(currentBlock){ playAudio(currentBlock.data); animate(); }
+            else if(state.roundHits<15){ spawnBlock(); }
+        }
     }
 
     // ─── SHOP ─────────────────────────────────────────────────────────────────
