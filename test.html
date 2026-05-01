@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
-    <title>Phonetic Flow v3.2.0</title>
+    <title>Phonetic Flow v3.3.0</title>
     <style>
         :root {
             --bg-color: #0f0f0f;
@@ -259,13 +259,37 @@
             letter-spacing: 2px; border-radius: 6px !important;
             padding: 14px 40px; font-size: 15px; width: 100%;
         }
+        /* DEV MODE */
+        #dev-panel {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+            background: rgba(0,0,0,0.92); border-top: 2px solid #e74c3c;
+            padding: 8px 12px; display: flex; align-items: center; gap: 8px;
+            flex-wrap: wrap; font-family: var(--font-retro); font-size: 11px;
+        }
+        #dev-panel span { color: #e74c3c; font-weight: 900; letter-spacing: 1px; flex-shrink:0; }
+        #dev-panel button {
+            padding: 4px 10px; font-size: 11px; border-radius: 4px; margin: 2px;
+            background: #222; border: 1px solid #e74c3c; color: #e74c3c;
+            font-family: var(--font-retro);
+        }
+        #dev-panel button.dev-active { background: #e74c3c; color: #000; }
+        #dev-panel .dev-actions { display: flex; gap: 4px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
 
-<button id="help-btn" onclick="showHelp()">?</button>
-<div id="currency-display">💰 0</div>
+<button id="help-btn" onclick="showHelp()" title="How to play">🧑</button>
+<div id="currency-display">🪙 0</div>
 <div id="lives-display">❤️❤️❤️</div>
+
+<!-- DEV PANEL — triple-tap the version label to reveal -->
+<div id="dev-panel" class="hidden">
+    <span>⚠️ DEV</span>
+    <div class="dev-actions" id="dev-level-btns"></div>
+    <button onclick="devUnlockAll()" style="border-color:#f1c40f;color:#f1c40f;">UNLOCK ALL</button>
+    <button onclick="devAddCoins()" style="border-color:#2ecc71;color:#2ecc71;">+500 🪙</button>
+    <button onclick="document.getElementById('dev-panel').classList.add('hidden')" style="margin-left:auto;">✕</button>
+</div>
 
 <div id="game-container">
     <div id="l-bg" class="bg-half"></div>
@@ -278,13 +302,13 @@
 
 <!-- MAIN MENU -->
 <div id="main-menu" class="overlay">
-    <h1 style="color: var(--accent); font-size: 42px; margin-bottom: 4px;">PHONETIC FLOW</h1>
+    <h1 onclick="devTitleTap()" style="color: var(--accent); font-size: 42px; margin-bottom: 4px; cursor:default;">PHONETIC FLOW</h1>
     <p id="level-display-name" style="color: #aaa; margin-bottom: 16px; font-weight: bold;"></p>
     <div id="gender-panel">
         <label>🎙️ Voice</label>
         <div class="gender-row">
-            <button id="btn-mike" onclick="setGender('male')" class="active-yellow">🎙️ Mike</button>
-            <button id="btn-jenny" onclick="setGender('female')">🎙️ Jenny</button>
+            <button id="btn-mike" onclick="setGender('male')" class="active-yellow">🧑 Mike</button>
+            <button id="btn-jenny" onclick="setGender('female')">🧒 Jenny</button>
         </div>
     </div>
     <button onclick="startGame()" style="background: var(--l-color); width: 220px; font-size: 20px; margin-top: 14px;">START</button>
@@ -329,9 +353,9 @@
             <button onclick="buyHeart()" style="background:#e74c3c; width:150px;">❤️ BUY (💰75)</button>
         </div>
         <div style="display:flex; justify-content:space-around; margin-bottom:25px;">
-            <button id="speed-0.7" onclick="setSpeed(0.7)" style="font-size:25px; background:#444;">🐢</button>
+            <button id="speed-0.5" onclick="setSpeed(0.5)" style="font-size:25px; background:#444;">🐢</button>
             <button id="speed-1.0" onclick="setSpeed(1.0)" style="font-size:25px; background:#444;">🧑</button>
-            <button id="speed-1.3" onclick="setSpeed(1.3)" style="font-size:25px; background:#444;">⚡</button>
+            <button id="speed-1.6" onclick="setSpeed(1.6)" style="font-size:25px; background:#444;">⚡</button>
         </div>
         <button onclick="closeMenus()" style="background:var(--l-color); width:100%; margin-bottom:10px;">RESUME</button>
         <button onclick="showMenu('main-menu')" style="background:#444; width:100%;">EXIT TO MENU</button>
@@ -352,14 +376,15 @@
     <button onclick="showMenu('main-menu')" style="background:#444;">EXIT</button>
 </div>
 
-<!-- KEY CEREMONY -->
-<div id="key-ceremony" class="hidden">
-    <div class="ceremony-border">
+<!-- KEY CEREMONY — click anywhere inside box to dismiss -->
+<div id="key-ceremony" class="hidden" onclick="dismissKeyCeremony()">
+    <div class="ceremony-border" style="cursor:pointer;">
         <div style="display:flex; align-items:flex-start;">
             <div class="ceremony-sprite">🧍</div>
             <div class="ceremony-key">🗝️</div>
         </div>
         <div class="ceremony-text" id="ceremony-text"></div>
+        <div style="font-size:11px; opacity:0.4; margin-top:16px; font-family:var(--font-retro); letter-spacing:1px;">TAP TO CONTINUE</div>
     </div>
 </div>
 
@@ -400,8 +425,8 @@
                     <span class="en">Tap LEFT or RIGHT to select the correct sound</span>
                 </div>
                 <div class="help-row">
-                    <span class="jp">✅ 15問正解でフロアクリア！</span>
-                    <span class="en">15 correct = floor clear</span>
+                    <span class="jp">✅ 10問正解でフロアクリア！</span>
+                    <span class="en">10 correct = floor clear</span>
                 </div>
                 <div class="help-row">
                     <span class="jp">❌ 間違えるとハートを失います</span>
@@ -656,13 +681,20 @@
     }
 
     function updateUI() {
-        document.getElementById('currency-display').innerText=`💰 ${coins()}`;
+        document.getElementById('currency-display').innerText=`🪙 ${coins()}`;
         document.getElementById('lives-display').innerText="❤️".repeat(Math.max(0,state.lives));
         document.getElementById('level-display-name').innerText=levels[state.curLevel].name;
         if(state.maxLevel>=2) document.getElementById('btn-world-map').classList.remove('hidden');
-        document.querySelectorAll('#pause-menu button').forEach(b=>b.classList.remove('active-yellow'));
-        const btn=document.getElementById(`speed-${state.speed.toFixed(1)}`);
+        // Speed buttons — IDs are speed-0.5, speed-1.0, speed-1.6
+        document.querySelectorAll('#pause-menu button[id^="speed-"]').forEach(b=>b.classList.remove('active-yellow'));
+        // Match 1 decimal for 0.5/1.0, or exact for 1.6
+        const speedId = `speed-${state.speed % 1 === 0 ? state.speed.toFixed(1) : state.speed}`;
+        const btn = document.getElementById(speedId);
         if(btn) btn.classList.add('active-yellow');
+        // Update dev panel active level button
+        document.querySelectorAll('#dev-level-btns button').forEach(b=>{
+            b.classList.toggle('dev-active', Number(b.dataset.lvl)===state.curLevel);
+        });
         saveGame();
     }
 
@@ -670,6 +702,20 @@
         state.gender=g;
         document.getElementById('btn-mike').classList.toggle('active-yellow',g==='male');
         document.getElementById('btn-jenny').classList.toggle('active-yellow',g==='female');
+        // Say "hello" in the selected voice
+        if(window.speechSynthesis){
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance('Hello!');
+            u.lang = 'en-US';
+            // Try to pick a matching gender voice if available
+            const voices = window.speechSynthesis.getVoices();
+            const match = voices.find(v => g==='female'
+                ? /female|woman|girl|zira|samantha|karen|victoria/i.test(v.name)
+                : /male|man|david|alex|daniel/i.test(v.name));
+            if(match) u.voice = match;
+            u.pitch = g==='female' ? 1.2 : 0.9;
+            window.speechSynthesis.speak(u);
+        }
         saveGame();
     }
 
@@ -689,7 +735,7 @@
         if(!anyOverlayVisible) {
             state.isPaused=false;
             if(currentBlock){ playAudio(currentBlock.data); animate(); }
-            else if(state.roundHits<15){ spawnBlock(); }
+            else if(state.roundHits<ROUND_LENGTH){ spawnBlock(); }
         }
     }
 
@@ -697,8 +743,8 @@
     function buyHeart() {
         if(coins()>=75){
             spendCoins(75); state.lives++; updateUI();
-            typeWriter("A FRESH HEART! STAY STRONG.",false);
-        } else { typeWriter("NOT ENOUGH COINS FOR A HEART!",false); }
+            typeWriter("❤️ STAY STRONG!",false);
+        } else { typeWriter("NOT ENOUGH COINS.",false); }
     }
 
     function buyItem(emoji,price,idx) {
@@ -717,21 +763,21 @@
         const grid=document.getElementById('shop-items-grid');
         const trade=document.getElementById('trade-ui');
         grid.innerHTML=""; grid.classList.remove('hidden'); trade.classList.add('hidden');
-        if(inv>=500 && !hasKey(state.curLevel)){
-            typeWriter("YOU HAVE PROVEN YOURSELF. OFFER A RARE STICKER TO RECEIVE THE KEY!",true);
+        if(inv>=300 && !hasKey(state.curLevel)){
+            typeWriter("OFFER A RARE STICKER FOR THE KEY!",true);
             grid.classList.add('hidden'); trade.classList.remove('hidden');
             const opts=document.getElementById('trade-options'); opts.innerHTML="";
             const unique=[...new Set(state.inventory.filter(i=>i.level===state.curLevel).map(i=>i.emoji))];
             unique.forEach(emo=>{ const b=document.createElement('button'); b.innerText=emo; b.style.fontSize="30px"; b.onclick=()=>processTrade(emo); opts.appendChild(b); });
         } else {
-            typeWriter("WELCOME! FLOOR "+state.curLevel+" SHOP. BUY STICKERS!",false);
+            typeWriter("FLOOR "+state.curLevel+" SHOP!",false);
             const hc=document.createElement('div'); hc.className="item-card";
-            hc.innerHTML=`<div>❤️</div><button onclick="buyHeart()">💰75</button>`; grid.appendChild(hc);
+            hc.innerHTML=`<div>❤️</div><button onclick="buyHeart()">🪙75</button>`; grid.appendChild(hc);
             levels[state.curLevel].stickers.forEach((item,idx)=>{
                 const count=state.inventory.filter(i=>i.emoji===item.emoji).length;
                 const stock=count===0?"2X":(count===1?"1X":"SOLD");
                 const card=document.createElement('div'); card.className="item-card"; card.id=`shop-item-${idx}`;
-                card.innerHTML=`<div>${item.emoji}</div><button onclick="buyItem('${item.emoji}',${item.price},${idx})" ${count>=2?'disabled':''}>${stock}: 💰${item.price}</button>`;
+                card.innerHTML=`<div>${item.emoji}</div><button onclick="buyItem('${item.emoji}',${item.price},${idx})" ${count>=2?'disabled':''}>${stock}: 🪙${item.price}</button>`;
                 grid.appendChild(card);
             });
         }
@@ -739,7 +785,7 @@
 
     function processTrade(emoji) {
         const ref=levels[state.curLevel].stickers.find(s=>s.emoji===emoji);
-        if(!ref||ref.price<=200){ typeWriter("NO. THAT IS TOO COMMON. I NEED SOMETHING RARER.",false); return; }
+        if(!ref||ref.price<=200){ typeWriter("TOO COMMON. GIVE ME SOMETHING RARER.",false); return; }
         const idx=state.inventory.findIndex(i=>i.emoji===emoji&&i.level===state.curLevel);
         state.inventory.splice(idx,1);
         state.inventory.push({emoji:"🗝️",level:state.curLevel,isKey:true});
@@ -749,14 +795,23 @@
 
     function hasKey(lvl){ return state.inventory.some(i=>i.level===lvl&&i.isKey); }
 
+    let keyCeremonyTimer = null;
     function showKeyCeremony(lvl) {
         const c=document.getElementById('key-ceremony');
         document.getElementById('ceremony-text').innerHTML=`YOU GOT THE KEY!<br>Floor ${lvl+1} is now open.`;
         c.classList.remove('hidden');
-        setTimeout(()=>c.classList.add('hidden'),4000);
+        // Auto-dismiss fallback after 8s if user doesn't tap
+        if(keyCeremonyTimer) clearTimeout(keyCeremonyTimer);
+        keyCeremonyTimer = setTimeout(dismissKeyCeremony, 8000);
+    }
+    function dismissKeyCeremony() {
+        if(keyCeremonyTimer){ clearTimeout(keyCeremonyTimer); keyCeremonyTimer=null; }
+        document.getElementById('key-ceremony').classList.add('hidden');
     }
 
     // ─── GAME FLOW ────────────────────────────────────────────────────────────
+    const ROUND_LENGTH = 10; // words needed to clear a floor
+
     function startGame() {
         cleanup(); state.lives=3; state.roundHits=0;
         document.getElementById('left-stack').innerHTML="";
@@ -771,7 +826,7 @@
     }
 
     function spawnBlock() {
-        if(state.isPaused||state.lives<=0||state.roundHits>=15) return;
+        if(state.isPaused||state.lives<=0||state.roundHits>=ROUND_LENGTH) return;
         const pool=levels[state.curLevel].words;
         const w=pool[Math.floor(Math.random()*pool.length)];
         if(currentBlock) return;
@@ -820,7 +875,7 @@
         else{ state.lives--; if(state.lives<=0){ cleanup(); updateUI(); return showMenu('game-over'); } }
         cleanup(); updateUI();
 
-        if(state.roundHits>=15){
+        if(state.roundHits>=ROUND_LENGTH){
             addCoins(50);
             // FIX — show congratulations on final level clear, round-win otherwise
             if(state.curLevel===FINAL_LEVEL){
@@ -838,10 +893,11 @@
     function closeMenus() {
         document.querySelectorAll('.overlay').forEach(el=>el.classList.add('hidden'));
         state.isPaused=false;
-        if(!currentBlock&&state.roundHits<15) spawnBlock();
+        if(!currentBlock&&state.roundHits<ROUND_LENGTH) spawnBlock();
         else if(currentBlock){ playAudio(currentBlock.data); animate(); }
     }
 
+    // Speed button IDs use one decimal place; valid values: 0.5, 1.0, 1.6
     function setSpeed(s){ state.speed=s; updateUI(); }
 
     // ─── TOWER & BOOK ─────────────────────────────────────────────────────────
@@ -932,6 +988,51 @@
         const ctx=canvas.getContext('2d');
         ctx.clearRect(0,0,canvas.width,canvas.height);
         confettiParticles=[];
+    }
+
+    // ─── DEV BACKDOOR ─────────────────────────────────────────────────────────
+    // Triple-tap the game title on the main menu to open the dev panel.
+    let devTapCount=0, devTapTimer=null;
+    function devTitleTap() {
+        devTapCount++;
+        if(devTapTimer) clearTimeout(devTapTimer);
+        devTapTimer = setTimeout(()=>{ devTapCount=0; },600);
+        if(devTapCount>=3){
+            devTapCount=0;
+            buildDevPanel();
+            document.getElementById('dev-panel').classList.remove('hidden');
+        }
+    }
+    function buildDevPanel() {
+        const container = document.getElementById('dev-level-btns');
+        container.innerHTML='';
+        for(let i=1;i<=9;i++){
+            if(!levels[i]) continue;
+            const b=document.createElement('button');
+            b.textContent=`F${i}`;
+            b.dataset.lvl=i;
+            b.classList.toggle('dev-active', i===state.curLevel);
+            b.onclick=()=>{
+                state.curLevel=i;
+                preloadAudio(); updateUI();
+                showMenu('main-menu');
+            };
+            container.appendChild(b);
+        }
+    }
+    function devUnlockAll() {
+        state.maxLevel=9;
+        for(let i=1;i<=9;i++){
+            if(!state.inventory.some(x=>x.level===i&&x.isKey)){
+                state.inventory.push({emoji:"🗝️",level:i,isKey:true});
+            }
+        }
+        updateUI();
+        document.getElementById('btn-world-map').classList.remove('hidden');
+        typeWriter && console.log('All levels unlocked');
+    }
+    function devAddCoins() {
+        addCoins(500); updateUI();
     }
 
     // ─── BOOT ─────────────────────────────────────────────────────────────────
